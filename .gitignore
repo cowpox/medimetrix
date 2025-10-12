@@ -1,0 +1,42 @@
+### Maven ###
+target/
+!.mvn/wrapper/maven-wrapper.properties
+.mvn/wrapper/maven-wrapper.jar
+
+### IntelliJ IDEA ###
+.idea/
+*.iml
+*.iws
+*.ipr
+
+### Spring Boot ###
+*.log
+*.tmp
+*.bak
+
+### OS ###
+.DS_Store
+Thumbs.db
+
+### VS Code (caso use) ###
+.vscode/
+
+### Build e Cache temporários ###
+build/
+out/
+bin/
+
+### Arquivos específicos do projeto ###
+HELP.md
+application-local.yml
+application-dev.yml
+application-prod.yml
+
+### Arquivos de backup do editor ###
+*~
+*.swp
+*.swo
+
+### Diretórios de documentação e exportações ###
+/docs/generated/
+/docs/temp/
