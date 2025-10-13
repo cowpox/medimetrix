@@ -1,5 +1,5 @@
 -- =========================================
--- Script: 04_create_avaliacao_questao.sql
+-- Script: 05_create_avaliacao_questao.sql
 -- Projeto: MediMetrix
 -- Schema : MEDIMETRIX
 -- =========================================

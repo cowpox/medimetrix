@@ -1,5 +1,5 @@
 -- =========================================
--- Script: 01_create_criterio.sql
+-- Script: 03_create_criterio.sql
 -- Projeto: MediMetrix
 -- Schema : MEDIMETRIX
 -- =========================================

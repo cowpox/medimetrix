@@ -1,5 +1,5 @@
 -- =========================================
--- Script: 05_create_meta.sql
+-- Script: 06_create_meta.sql
 -- Projeto: MediMetrix
 -- Schema : MEDIMETRIX
 -- =========================================
@@ -18,11 +18,9 @@ CREATE TABLE MEDIMETRIX.META (
                                  OPERADOR              VARCHAR(2)  NOT NULL DEFAULT '>=',  -- '>=', '<=', '='
 
                                  VIGENCIA_INICIO       DATE,              -- opcional
-                                 VIGENCIA_FIM          DATE,              -- opcional
 
                                  ATIVO                 BOOLEAN NOT NULL DEFAULT TRUE,
                                  PRIORIDADE            INT,               -- menor = mais prioritária
-                                 FONTE                 VARCHAR(150),      -- opcional
                                  JUSTIFICATIVA         VARCHAR(1000),     -- opcional
 
                                  DATA_CRIACAO          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

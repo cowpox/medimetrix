@@ -1,0 +1,365 @@
+# MediMetrix — Esquema Relacional (MD)
+
+> Nomenclatura alinhada ao MER. Cada bloco traz **Relação**, **Chaves**, **FKs** e **Restrições**.
+> Banco/Schema de referência: `medimetrix_db` / `MEDIMETRIX`.
+
+---
+
+## QUESTAO
+
+**Relação**
+```text
+QUESTAO = {
+  ID_QUESTAO, ID_CRITERIO,
+  ENUNCIADO, DESCRICAO_AUXILIAR,
+  ATIVO,
+  TIPO, OBRIGATORIEDADE,
+  VALIDACAO_NUM_MIN, VALIDACAO_NUM_MAX,
+  TAMANHO_TEXTO_MAX,
+  CONFIG_JSON,
+  SENSIVEL, VISIVEL_PARA_GESTOR,
+  VERSAO, ORDEM_SUGERIDA,
+  DATA_CRIACAO, DATA_ULTIMA_EDICAO
+}
+```
+
+**Chaves**
+```text
+PK_QUESTAO = { ID_QUESTAO }
+```
+
+**Chaves Estrangeiras**
+```text
+FK_QUESTAO_CRITERIO: ID_CRITERIO → CRITERIO(ID_CRITERIO)
+```
+
+**Domínios / Restrições**
+- ENUNCIADO não vazio (trim > 0).
+- ATIVO ∈ {TRUE, FALSE} (DEFAULT TRUE).
+- TIPO ∈ { 'LIKERT_5','BARS_5','OPEN','CHECK','NUM_0_10' }.
+- OBRIGATORIEDADE ∈ { 'OPCIONAL','OBRIGATORIA' } (DEFAULT 'OBRIGATORIA').
+- VALIDACAO_NUM_MIN, VALIDACAO_NUM_MAX numéricos (podem ser nulos, exceto quando o tipo exigir).
+- TAMANHO_TEXTO_MAX INT (obrigatório quando TIPO='OPEN'; nulo nos demais).
+- CONFIG_JSON JSON (PostgreSQL).
+- SENSIVEL ∈ {TRUE, FALSE} (DEFAULT FALSE).
+- VISIVEL_PARA_GESTOR ∈ {TRUE, FALSE} (DEFAULT TRUE).
+- VERSAO INT (DEFAULT 1); ORDEM_SUGERIDA INT (opcional).
+- DATA_* TIMESTAMP (DEFAULT CURRENT_TIMESTAMP).
+
+**Regras de coerência**
+- Se TIPO IN ('LIKERT_5','BARS_5') ⇒ VALIDACAO_NUM_MIN=1 e VALIDACAO_NUM_MAX=5.
+- Se TIPO='NUM_0_10' ⇒ VALIDACAO_NUM_MIN=0 e VALIDACAO_NUM_MAX=10.
+- Se TIPO='OPEN' ⇒ TAMANHO_TEXTO_MAX **não nulo**; demais tipos **nulo**.
+
+---
+
+## CRITERIO
+
+**Relação**
+```text
+CRITERIO = {
+  ID_CRITERIO, NOME, DEFINICAO_OPERACIONAL, DESCRICAO,
+  ATIVO, PESO, ORDEM_SUGERIDA, VERSAO,
+  DATA_CRIACAO, DATA_ULTIMA_EDICAO
+}
+```
+
+**Chaves**
+```text
+PK_CRITERIO = { ID_CRITERIO }
+UNIQUE: NOME
+```
+
+**Domínios / Restrições**
+- ATIVO ∈ {TRUE, FALSE} (DEFAULT TRUE)
+- PESO DECIMAL(6,2) (DEFAULT 1.00; PESO > 0)
+- ORDEM_SUGERIDA INT (opcional)
+- VERSAO INT (DEFAULT 1)
+- DATA_* TIMESTAMP (DEFAULT CURRENT_TIMESTAMP)
+
+---
+
+## AVALIACAO
+
+**Relação**
+```text
+AVALIACAO = {
+  ID_AVALIACAO, TITULO,
+  DATA_INICIO_APLIC, DATA_FIM_APLIC,
+  K_MINIMO, STATUS, ATIVO, VERSAO,
+  DATA_CRIACAO, DATA_ULTIMA_EDICAO
+}
+```
+
+**Chaves**
+```text
+PK_AVALIACAO = { ID_AVALIACAO }
+UNIQUE: (TITULO, DATA_INICIO_APLIC)
+```
+
+**Checks**
+- STATUS ∈ {'RASCUNHO','PUBLICADA','ENCERRADA'}
+- K_MINIMO ≥ 2
+- DATA_INICIO_APLIC ≤ DATA_FIM_APLIC
+
+---
+
+## AVALIACAO_QUESTAO
+
+**Relação**
+```text
+AVALIACAO_QUESTAO = {
+  ID_AVALIACAO, ID_QUESTAO,
+  ORDEM,
+  OBRIGATORIA_NA_AVAL, ATIVA_NA_AVAL,
+  PESO_NA_AVAL,
+  VISIVEL_PARA_GESTOR_LOCAL,
+  OBSERVACAO_ADMIN,
+  DATA_CRIACAO, DATA_ULTIMA_EDICAO
+}
+```
+
+**Chaves**
+```text
+PK_AVAL_QUEST = { ID_AVALIACAO, ID_QUESTAO }
+UNIQUE: (ID_AVALIACAO, ORDEM)
+```
+
+**FKs**
+```text
+ID_AVALIACAO → AVALIACAO(ID_AVALIACAO)
+ID_QUESTAO   → QUESTAO(ID_QUESTAO)
+```
+
+**Restrições**
+- ORDEM ≥ 1
+- PESO_NA_AVAL > 0 (quando não nulo)
+
+---
+
+## META
+
+**Relação**
+```text
+META = {
+  ID_META, ID_CRITERIO,
+  ID_UNIDADE, ID_ESPECIALIDADE,   -- opcionais
+  ALVO, OPERADOR,
+  VIGENCIA_INICIO, VIGENCIA_FIM,
+  ATIVO, PRIORIDADE, JUSTIFICATIVA,
+  DATA_CRIACAO, DATA_ULTIMA_EDICAO
+}
+```
+
+**Chaves**
+```text
+PK_META = { ID_META }
+UNIQUE (ID_CRITERIO, ID_UNIDADE, ID_ESPECIALIDADE, VIGENCIA_INICIO)
+```
+
+**FKs**
+```text
+ID_CRITERIO      → CRITERIO(ID_CRITERIO)           -- obrigatória
+ID_UNIDADE       → UNIDADE(ID_UNIDADE)             -- opcional
+ID_ESPECIALIDADE → ESPECIALIDADE(ID_ESPECIALIDADE) -- opcional
+```
+
+**Domínios / Restrições**
+- OPERADOR ∈ { '>=', '<=', '=' }
+- VIGENCIA_INICIO ≤ VIGENCIA_FIM (quando ambos não nulos)
+- ALVO DECIMAL(5,2)
+- ATIVO BOOLEAN (DEFAULT TRUE)
+- PRIORIDADE INT (opcional; menor = mais prioritária)
+
+---
+
+## PARTICIPACAO
+
+**Relação**
+```text
+PARTICIPACAO = {
+  ID_PARTICIPACAO, ID_AVALIACAO, AVALIADO_MEDICO_ID,
+  UNIDADE_SNAPSHOT_ID, ESPECIALIDADE_SNAPSHOT_ID,
+  STATUS, STARTED_AT, LAST_ACTIVITY_AT, SUBMITTED_AT,
+  DATA_CRIACAO, DATA_ULTIMA_EDICAO
+}
+```
+
+**Chaves**
+```text
+PK_PARTICIPACAO = { ID_PARTICIPACAO }
+UNIQUE: (ID_AVALIACAO, AVALIADO_MEDICO_ID)
+```
+
+**FKs**
+```text
+ID_AVALIACAO               → AVALIACAO(ID_AVALIACAO)
+AVALIADO_MEDICO_ID         → MEDICO(USUARIO_ID)                  -- quando MEDICO existir
+UNIDADE_SNAPSHOT_ID        → UNIDADE(ID_UNIDADE)                 -- opcional
+ESPECIALIDADE_SNAPSHOT_ID  → ESPECIALIDADE(ID_ESPECIALIDADE)     -- opcional
+```
+
+**Domínios / Restrições**
+- STATUS ∈ { 'PENDENTE','EM_ANDAMENTO','RESPONDIDA' } (DEFAULT 'PENDENTE')
+- SUBMITTED_AT IS NULL quando STATUS <> 'RESPONDIDA'
+
+---
+
+## RESPOSTA
+
+**Relação**
+```text
+RESPOSTA = {
+  ID_RESPOSTA,
+  ID_PARTICIPACAO,
+  ID_AVALIACAO, ID_QUESTAO,
+  DATA_RESPOSTA,
+  VALOR_NUMERICO, VALOR_BINARIO, TEXTO
+}
+```
+
+**Chaves**
+```text
+PK_RESPOSTA = { ID_RESPOSTA }
+UNIQUE: (ID_PARTICIPACAO, ID_QUESTAO)
+```
+
+**FKs**
+```text
+ID_PARTICIPACAO                 → PARTICIPACAO(ID_PARTICIPACAO)
+(ID_AVALIACAO, ID_QUESTAO)      → AVALIACAO_QUESTAO(ID_AVALIACAO, ID_QUESTAO)
+```
+
+**Checks básicos**
+- Pelo menos um entre {VALOR_NUMERICO, VALOR_BINARIO, TEXTO} não nulo
+- Não permitir VALOR_NUMERICO e VALOR_BINARIO simultaneamente
+
+---
+
+## UNIDADE
+
+**Relação**
+```text
+UNIDADE = {
+  ID_UNIDADE, NOME, GESTOR_USUARIO_ID, ATIVO,
+  DATA_CRIACAO, DATA_ULTIMA_EDICAO
+}
+```
+
+**Chaves**
+```text
+PK_UNIDADE = { ID_UNIDADE }
+UNIQUE: (NOME)
+```
+
+**FKs**
+```text
+GESTOR_USUARIO_ID → GESTOR(USUARIO_ID)   -- subtipo Gestor
+```
+
+**Domínios**
+- ATIVO ∈ {TRUE,FALSE} (DEFAULT TRUE)
+- NOME não vazio
+
+---
+
+## ESPECIALIDADE
+
+**Relação**
+```text
+ESPECIALIDADE = {
+  ID_ESPECIALIDADE, NOME, ATIVO,
+  DATA_CRIACAO, DATA_ULTIMA_EDICAO
+}
+```
+
+**Chaves**
+```text
+PK_ESPECIALIDADE = { ID_ESPECIALIDADE }
+UNIQUE: (NOME)
+```
+
+**Domínios**
+- ATIVO ∈ {TRUE,FALSE}  (DEFAULT TRUE)
+- NOME não vazio
+
+---
+
+## USUARIO
+
+**Relação**
+```text
+USUARIO = {
+  ID_USUARIO, NOME, EMAIL, ATIVO, PAPEL,
+  DATA_CRIACAO, DATA_ULTIMA_EDICAO
+}
+```
+
+**Chaves**
+```text
+PK_USUARIO = { ID_USUARIO }
+UNIQUE (case-insensitive): LOWER(EMAIL)
+```
+
+**Domínios / Checks**
+- PAPEL ∈ { 'MEDICO','GESTOR','ADMIN' }
+- ATIVO ∈ {TRUE,FALSE} (DEFAULT TRUE)
+- NOME, EMAIL não vazios (trim > 0)
+
+---
+
+## MEDICO
+
+**Relação**
+```text
+MEDICO = {
+  USUARIO_ID,           -- PK e FK → USUARIO(ID_USUARIO)
+  ESPECIALIDADE_ID,     -- FK → ESPECIALIDADE(ID_ESPECIALIDADE)
+  UNIDADE_ID,           -- FK → UNIDADE(ID_UNIDADE)
+  CRM_NUM,              -- ex.: '12345' / '12345-6'
+  CRM_UF                -- 'SP','RJ',...
+}
+```
+
+**Chaves**
+```text
+PK_MEDICO = { USUARIO_ID }
+UNIQUE (opcional): (CRM_NUM, CRM_UF)
+```
+
+**Checks**
+- CRM_UF ∈ {27 UFs}
+
+---
+
+## GESTOR
+
+**Relação**
+```text
+GESTOR = { USUARIO_ID }
+```
+
+**Chaves / FK**
+```text
+PK_GESTOR = { USUARIO_ID }
+USUARIO_ID → USUARIO(ID_USUARIO)  [1:1, ON DELETE CASCADE]
+```
+
+---
+
+## ADMIN
+
+**Relação**
+```text
+ADMIN = { USUARIO_ID }
+```
+
+**Chaves / FK**
+```text
+PK_ADMIN = { USUARIO_ID }
+USUARIO_ID → USUARIO(ID_USUARIO)  [1:1, ON DELETE CASCADE]
+```
+
+---
+
+_Fim do documento._
