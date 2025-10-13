@@ -5,26 +5,55 @@ O **MediMetrix** é uma aplicação desenvolvida em **Java Spring Boot** com o o
 
 ---
 
+## ✅ Entrega 1 — Itens atendidos
+
+- **Descrição detalhada do sistema e fluxos funcionais:** `docs/MediMetrix_Descricao_Sistema.pdf`
+- **Modelagem conceitual (Diagrama ER):** `docs/MediMetrix - MER.png`
+- **Esquema relacional normalizado (mapeado p/ PostgreSQL):** `docs/MediMetrix - Esquema Relacional.md`
+- **Script SQL de criação do banco (com PK/FK/UNIQUE/CHECK/índices):** `docs/sql/` (arquivos 00–14)
+- **Protótipos visuais dos relatórios (gráficos/tabelas):** incluídos no PDF de descrição
+- **Explicação técnica das consultas SQL dos relatórios:** incluída no PDF de descrição
+
+> Observação: o documento “**MediMetrix_Projeto_BD1.md**” agrega o racional do projeto, contexto e referências.
+
+
+
 ## 📂 Estrutura do Projeto
 
 ```
 medimetrix/
-├─ docs/                          → Documentos do projeto (ex.: MediMetrix_Projeto_BD1.md)
+├─ docs/
+│  ├─ MediMetrix_Projeto_BD1.md
+│  ├─ MediMetrix_Descricao_Sistema.pdf          # descrição, fluxos, mockups e consultas SQL explicadas
+│  ├─ MediMetrix - MER.png                      # diagrama ER
+│  ├─ MediMetrix - Esquema Relacional.md        # tabelas (3FN) e chaves
+│  └─ sql/                                      # DDL PostgreSQL (ordem 00 → 14)
+│     ├─ 00_create_database.sql                 # master: cria DB e encadeia demais
+│     ├─ 01_create_schema_basico.sql
+│     ├─ 02_create_questao.sql
+│     ├─ 03_create_criterio.sql
+│     ├─ 04_create_avaliacao.sql
+│     ├─ 05_create_avaliacao_questao.sql
+│     ├─ 06_create_meta.sql
+│     ├─ 07_create_participacao.sql
+│     ├─ 08_create_resposta.sql
+│     ├─ 09_create_unidade.sql
+│     ├─ 10_create_especialidade.sql
+│     ├─ 11_create_usuario.sql
+│     ├─ 12_create_medico.sql
+│     ├─ 13_create_gestor.sql
+│     └─ 14_create_admin.sql
 ├─ src/
-│  ├─ main/
-│  │  ├─ java/com/mmx/medimetrix/ → Código-fonte (controllers, services, DAO)
-│  │  └─ resources/
-│  │     ├─ db.migration/         → Scripts SQL do Flyway (migrar schema e seeds)
-│  │     ├─ static/               → Arquivos estáticos (JS, CSS, imagens)
-│  │     ├─ templates.relatorios/ → Templates Thymeleaf para relatórios
-│  │     └─ application.yml       → Configurações do Spring Boot
-│  └─ test/java/                  → Testes automatizados (JUnit)
-├─ pom.xml                        → Dependências e build Maven
-├─ .gitignore                     → Regras de versionamento
-└─ README.md                      → Este arquivo
+│  ├─ main/java/com/mmx/medimetrix/             # controllers, services, dao
+│  └─ main/resources/
+│     ├─ templates/                             # Thymeleaf
+│     └─ application.yml
+├─ pom.xml
+└─ README.md
 ```
 
 ---
+
 
 ## ⚙️ Tecnologias Principais
 
