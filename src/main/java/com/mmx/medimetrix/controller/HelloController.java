@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class HelloController {
     @GetMapping("/")
     public String home(Model model) {
-        model.addAttribute("msg", "MediMetrix rodando! (sem banco por enquanto)");
+        model.addAttribute("msg", "MediMetrix rodando!");
         return "relatorios/home";
     }
 }
