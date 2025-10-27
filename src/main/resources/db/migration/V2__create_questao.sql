@@ -19,6 +19,12 @@ CREATE TABLE MEDIMETRIX.QUESTAO (
                                     VALIDACAO_NUM_MAX    NUMERIC(10,3),
                                     TAMANHO_TEXTO_MAX    INT,
 
+                                    SENSIVEL             BOOLEAN NOT NULL DEFAULT FALSE,
+                                    VISIVEL_PARA_GESTOR  BOOLEAN NOT NULL DEFAULT TRUE,
+
+                                    VERSAO               INT NOT NULL DEFAULT 1,
+                                    ORDEM_SUGERIDA       INT,
+
                                     DATA_CRIACAO         TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                                     DATA_ULTIMA_EDICAO   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
