@@ -7,8 +7,9 @@ spring:
 
   flyway:
     enabled: true
+    schemas: medimetrix, public
+    default-schema: medimetrix
     locations: classpath:db/migration
-    baseline-on-migrate: true
 
   thymeleaf:
     cache: false
