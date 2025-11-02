@@ -11,6 +11,7 @@ public interface RespostaDao {
     List<Resposta> listByParticipacao(Long idParticipacao);
     List<Resposta> listByAvaliacao(Long idAvaliacao, Integer offset, Integer limit);
     List<Resposta> listByQuestao(Long idQuestao, Integer offset, Integer limit);
+    List<Resposta> listPaged(Integer offset, Integer limit);
     int deleteById(Long idResposta);
     int deleteByParticipacao(Long idParticipacao);
 }

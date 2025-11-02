@@ -12,6 +12,7 @@ public interface ParticipacaoDao {
     List<Participacao> listByAvaliacao(Long idAvaliacao, Integer offset, Integer limit);
     List<Participacao> listByMedico(Long medicoId, Integer offset, Integer limit);
     List<Participacao> listByStatus(String status, Integer offset, Integer limit);
+    List<Participacao> listPaged(Integer offset, Integer limit);
     int markStarted(Long idParticipacao);       // STATUS = EM_ANDAMENTO, STARTED_AT = now
     int touchActivity(Long idParticipacao);     // LAST_ACTIVITY_AT = now
     int markSubmitted(Long idParticipacao);     // STATUS = RESPONDIDA, SUBMITTED_AT = now

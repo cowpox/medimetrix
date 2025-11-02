@@ -63,6 +63,16 @@ public class ParticipacaoDaoJdbc implements ParticipacaoDao {
     }
 
     @Override
+    public List<Participacao> listPaged(Integer offset, Integer limit) {
+        final String sql = BASE_SELECT
+                + " ORDER BY ID_PARTICIPACAO DESC "
+                + " LIMIT ? OFFSET ?";
+
+        return jdbc.query(sql, MAPPER, limit, offset);
+    }
+
+
+    @Override
     public int markStarted(Long idParticipacao) {
         final String sql = "UPDATE MEDIMETRIX.PARTICIPACAO SET STATUS = 'EM_ANDAMENTO', STARTED_AT = COALESCE(STARTED_AT, CURRENT_TIMESTAMP), LAST_ACTIVITY_AT = CURRENT_TIMESTAMP, DATA_ULTIMA_EDICAO = CURRENT_TIMESTAMP WHERE ID_PARTICIPACAO = ? AND STATUS <> 'RESPONDIDA'";
         return jdbc.update(sql, idParticipacao);

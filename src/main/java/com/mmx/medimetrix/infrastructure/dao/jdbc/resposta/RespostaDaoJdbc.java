@@ -56,6 +56,14 @@ public class RespostaDaoJdbc implements RespostaDao {
     }
 
     @Override
+    public List<Resposta> listPaged(Integer offset, Integer limit) {
+        final String sql =
+                BASE_SELECT + " ORDER BY ID_RESPOSTA DESC LIMIT ? OFFSET ?"; // use seu BASE_SELECT
+        return jdbc.query(sql, MAPPER, limit, offset);
+    }
+
+
+    @Override
     public int deleteById(Long idResposta) {
         final String sql = "DELETE FROM MEDIMETRIX.RESPOSTA WHERE ID_RESPOSTA = ?";
         return jdbc.update(sql, idResposta);
