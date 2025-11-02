@@ -1,4 +1,3 @@
-
 package com.mmx.medimetrix.web.api.v1.criterio;
 
 import com.mmx.medimetrix.application.criterio.commands.CriterioCreate;
@@ -8,9 +7,13 @@ import com.mmx.medimetrix.web.api.v1.criterio.dto.CriterioCreateDTO;
 import com.mmx.medimetrix.web.api.v1.criterio.dto.CriterioResponseDTO;
 import com.mmx.medimetrix.web.api.v1.criterio.dto.CriterioUpdateDTO;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
@@ -22,47 +25,72 @@ public class CriterioController {
 
     private final CriterioService service;
 
-    public CriterioController(CriterioService service) { this.service = service; }
-
-    @PostMapping
-    public ResponseEntity<CriterioResponseDTO> create(@Valid @RequestBody CriterioCreateDTO dto) {
-        var created = service.create(new CriterioCreate(dto.nome(), dto.definicaoOperacional(), dto.descricao()));
-        return ResponseEntity.created(URI.create("/api/v1/criterios/" + created.getIdCriterio()))
-                .body(CriterioMapper.toResponse(created));
+    public CriterioController(CriterioService service) {
+        this.service = service;
     }
 
+    // POST -> 201 Created + Location, sem corpo
+    @PostMapping
+    public ResponseEntity<Void> create(@Valid @RequestBody CriterioCreateDTO dto,
+                                       UriComponentsBuilder uriBuilder) {
+        var created = service.create(new CriterioCreate(
+                dto.nome(),
+                dto.definicaoOperacional(),
+                dto.descricao()
+        ));
+        URI location = uriBuilder.path("/api/v1/criterios/{id}")
+                .buildAndExpand(created.getIdCriterio())
+                .toUri();
+        return ResponseEntity.created(location).build();
+    }
+
+    // GET by id -> 200 OK ou 404
     @GetMapping("/{id}")
     public ResponseEntity<CriterioResponseDTO> getById(@PathVariable Long id) {
-        return service.findById(id).map(CriterioMapper::toResponse).map(ResponseEntity::ok)
+        return service.findById(id)
+                .map(CriterioMapper::toResponse)
+                .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // GET list -> 200 OK
     @GetMapping
     public ResponseEntity<List<CriterioResponseDTO>> list(
             @RequestParam(required = false) String nome,
-            @RequestParam(required = false, defaultValue = "0") Integer page,
-            @RequestParam(required = false, defaultValue = "20") Integer size
+            @RequestParam(defaultValue = "0") @Min(0) Integer page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(200) Integer size
     ) {
         var filtro = new CriterioFiltro(nome, page, size);
-        var resp = service.list(filtro).stream().map(CriterioMapper::toResponse).toList();
+        var resp = service.list(filtro).stream()
+                .map(CriterioMapper::toResponse)
+                .toList();
         return ResponseEntity.ok(resp);
     }
 
+    // PUT -> 204 No Content
     @PutMapping("/{id}")
-    public ResponseEntity<CriterioResponseDTO> update(@PathVariable Long id, @Valid @RequestBody CriterioUpdateDTO dto) {
-        var updated = service.update(id, dto.nome(), dto.definicaoOperacional(), dto.descricao(), dto.ativo());
-        return ResponseEntity.ok(CriterioMapper.toResponse(updated));
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void update(@PathVariable Long id, @Valid @RequestBody CriterioUpdateDTO dto) {
+        service.update(
+                id,
+                dto.nome(),
+                dto.definicaoOperacional(),
+                dto.descricao(),
+                dto.ativo()
+        );
     }
 
+    // DELETE (desativar) -> 204 No Content
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deactivate(@PathVariable Long id) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deactivate(@PathVariable Long id) {
         service.deactivate(id);
-        return ResponseEntity.noContent().build();
     }
 
+    // POST ativar -> 204 No Content
     @PostMapping("/{id}/ativar")
-    public ResponseEntity<Void> activate(@PathVariable Long id) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void activate(@PathVariable Long id) {
         service.activate(id);
-        return ResponseEntity.noContent().build();
     }
 }

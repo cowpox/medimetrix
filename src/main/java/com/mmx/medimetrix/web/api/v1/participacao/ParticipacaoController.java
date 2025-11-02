@@ -6,14 +6,19 @@ import com.mmx.medimetrix.web.api.v1.participacao.dto.ParticipacaoCreateDTO;
 import com.mmx.medimetrix.web.api.v1.participacao.dto.ParticipacaoResponseDTO;
 import com.mmx.medimetrix.web.api.v1.participacao.dto.ParticipacaoUpdateDTO;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/participacoes")
+@Validated
 public class ParticipacaoController {
 
     private final ParticipacaoService service;
@@ -24,12 +29,18 @@ public class ParticipacaoController {
         this.mapper = mapper;
     }
 
+    // POST -> 201 Created + Location, sem corpo
     @PostMapping
-    public ResponseEntity<Void> create(@Valid @RequestBody ParticipacaoCreateDTO dto) {
+    public ResponseEntity<Void> create(@Valid @RequestBody ParticipacaoCreateDTO dto,
+                                       UriComponentsBuilder uriBuilder) {
         Long id = service.create(mapper.toCommand(dto));
-        return ResponseEntity.created(URI.create("/api/v1/participacoes/" + id)).build();
+        URI location = uriBuilder.path("/api/v1/participacoes/{id}")
+                .buildAndExpand(id)
+                .toUri();
+        return ResponseEntity.created(location).build();
     }
 
+    // PUT -> 204 No Content
     @PutMapping("/{id}")
     public ResponseEntity<Void> update(@PathVariable Long id, @Valid @RequestBody ParticipacaoUpdateDTO dto) {
         Participacao atual = service.findById(id).orElseThrow();
@@ -37,10 +48,13 @@ public class ParticipacaoController {
         return ResponseEntity.noContent().build();
     }
 
+    // GET by id -> 200 OK ou 404
     @GetMapping("/{id}")
     public ResponseEntity<ParticipacaoResponseDTO> getById(@PathVariable Long id) {
-        Participacao p = service.findById(id).orElseThrow();
-        return ResponseEntity.ok(mapper.toDTO(p));
+        return service.findById(id)
+                .map(mapper::toDTO)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     /**
@@ -48,12 +62,12 @@ public class ParticipacaoController {
      * - ?avaliacaoId=...
      * - ?medicoId=...
      * - ?status=...
-     * - ?avaliacaoId=...&medicoId=...  -> busca 1x1 (findByAvaliacaoAndMedico)
+     * - ?avaliacaoId=...&medicoId=... -> busca 1x1
      */
     @GetMapping
     public ResponseEntity<?> list(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(200) int size,
             @RequestParam(required = false, name = "avaliacaoId") Long idAvaliacao,
             @RequestParam(required = false, name = "medicoId") Long medicoId,
             @RequestParam(required = false) String status
@@ -61,7 +75,7 @@ public class ParticipacaoController {
         if (idAvaliacao != null && medicoId != null) {
             return service.findByAvaliacaoAndMedico(idAvaliacao, medicoId)
                     .<ResponseEntity<?>>map(p -> ResponseEntity.ok(mapper.toDTO(p)))
-                    .orElseGet(() -> ResponseEntity.notFound().build());
+                    .orElse(ResponseEntity.notFound().build());
         }
 
         List<Participacao> result;
@@ -74,10 +88,11 @@ public class ParticipacaoController {
         } else {
             result = service.listPaged(page, size);
         }
+
         return ResponseEntity.ok(result.stream().map(mapper::toDTO).toList());
     }
 
-    // Transições de estado
+    // PATCH transições -> 204 No Content
     @PatchMapping("/{id}/start")
     public ResponseEntity<Void> markStarted(@PathVariable Long id) {
         service.markStarted(id);
@@ -96,6 +111,7 @@ public class ParticipacaoController {
         return ResponseEntity.noContent().build();
     }
 
+    // DELETE -> 204 No Content
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.delete(id);

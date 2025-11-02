@@ -8,10 +8,13 @@ import com.mmx.medimetrix.web.api.v1.unidade.dto.UnidadeCreateDTO;
 import com.mmx.medimetrix.web.api.v1.unidade.dto.UnidadeResponseDTO;
 import com.mmx.medimetrix.web.api.v1.unidade.dto.UnidadeUpdateDTO;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
@@ -27,14 +30,18 @@ public class UnidadeController {
         this.service = service;
     }
 
+    // POST -> 201 Created + Location, sem corpo
     @PostMapping
-    public ResponseEntity<UnidadeResponseDTO> create(@Valid @RequestBody UnidadeCreateDTO dto) {
+    public ResponseEntity<Void> create(@Valid @RequestBody UnidadeCreateDTO dto,
+                                       UriComponentsBuilder uriBuilder) {
         Unidade created = service.create(new UnidadeCreate(dto.nome()));
-        return ResponseEntity
-                .created(URI.create("/api/v1/unidades/" + created.getIdUnidade()))
-                .body(UnidadeMapper.toResponse(created));
+        URI location = uriBuilder.path("/api/v1/unidades/{id}")
+                .buildAndExpand(created.getIdUnidade())
+                .toUri();
+        return ResponseEntity.created(location).build();
     }
 
+    // GET by id -> 200 OK ou 404
     @GetMapping("/{id}")
     public ResponseEntity<UnidadeResponseDTO> getById(@PathVariable Long id) {
         return service.findById(id)
@@ -43,32 +50,39 @@ public class UnidadeController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // GET list -> 200 OK
     @GetMapping
     public ResponseEntity<List<UnidadeResponseDTO>> list(
             @RequestParam(required = false) String nome,
-            @RequestParam(required = false, defaultValue = "0") Integer page,
-            @RequestParam(required = false, defaultValue = "20") Integer size,
-            @RequestParam(required = false, defaultValue = "nome") String sortBy,
-            @RequestParam(required = false, defaultValue = "true") Boolean asc
+            @RequestParam(defaultValue = "0") @Min(0) Integer page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(200) Integer size,
+            @RequestParam(defaultValue = "nome") String sortBy,
+            @RequestParam(defaultValue = "true") boolean asc
     ) {
         var filtro = new UnidadeFiltro(nome, page, size, sortBy, asc);
         List<UnidadeResponseDTO> resp = service.list(filtro)
-                .stream().map(UnidadeMapper::toResponse).toList();
+                .stream()
+                .map(UnidadeMapper::toResponse)
+                .toList();
         return ResponseEntity.ok(resp);
     }
 
+    // PUT -> 204 No Content
     @PutMapping("/{id}")
-    public ResponseEntity<UnidadeResponseDTO> update(@PathVariable Long id, @Valid @RequestBody UnidadeUpdateDTO dto) {
-        Unidade updated = service.update(id, dto.nome(), dto.ativo());
-        return ResponseEntity.ok(UnidadeMapper.toResponse(updated));
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void update(@PathVariable Long id, @Valid @RequestBody UnidadeUpdateDTO dto) {
+        // service pode retornar Unidade; ignoramos o corpo para manter o padrão 204
+        service.update(id, dto.nome(), dto.ativo());
     }
 
+    // DELETE (desativar) -> 204 No Content
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deactivate(@PathVariable Long id) {
         service.deactivate(id);
     }
 
+    // POST ativar -> 204 No Content
     @PostMapping("/{id}/ativar")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void activate(@PathVariable Long id) {
