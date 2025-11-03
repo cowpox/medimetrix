@@ -1,0 +1,742 @@
+{
+  "info": {
+    "name": "MediMetrix • Medico (v1) – FIX",
+    "_postman_id": "Medico-FIX-20251102-235420",
+    "description": "Coleção corrigida: CRM gerado uma única vez via pre-request guard, evitando troca de valor entre requests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "let crm = pm.environment.get('medicoCrmNumeroRand');",
+          "if (!crm) {",
+          "  const rnd = Math.floor(Math.random()*100000);",
+          "  pm.environment.set('medicoCrmNumeroRand', String(10000 + (rnd % 89999)));",
+          "  pm.environment.set('usuarioEmailRand', `medico.auto.${rnd}@example.com`);",
+          "  pm.environment.set('usuarioNomeRand', `Médico Auto ${rnd}`);",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "00 • Bootstrap",
+      "item": [
+        {
+          "name": "Selecionar Especialidade (ativa)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/especialidades?page=0&size=50&sortBy=nome&asc=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "especialidades?page=0&size=50&sortBy=nome&asc=true"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const arr = pm.response.json();",
+                  "pm.test('lista recebida', () => pm.expect(Array.isArray(arr)).to.be.true);",
+                  "let id = ''; for (const e of arr) { if (e.ativo) { id = e.id; break; }}",
+                  "if (!id && arr.length) id = arr[0].id;",
+                  "pm.environment.set('bootstrapEspecialidadeId', id);",
+                  "pm.test('especialidadeId definido', () => pm.expect(id).to.be.ok);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Selecionar Unidade existente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/unidades?page=0&size=50&asc=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "unidades?page=0&size=50&asc=true"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const arr = pm.response.json();",
+                  "pm.test('lista de unidades', () => pm.expect(Array.isArray(arr)).to.be.true);",
+                  "pm.environment.set('bootstrapUnidadeId', (arr[0] && arr[0].id) ? arr[0].id : '');",
+                  "pm.test('unidadeId definido', () => pm.expect(pm.environment.get('bootstrapUnidadeId')).to.be.ok);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Criar Usuário (papel=MEDICO)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"{{usuarioNomeRand}}\",\n  \"email\": \"{{usuarioEmailRand}}\",\n  \"papel\": \"MEDICO\",\n  \"ativo\": true\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created (usuario)', () => pm.response.to.have.status(201));",
+                  "pm.test('Location presente', () => pm.expect(pm.response.headers.has('Location')).to.be.true);",
+                  "const loc = pm.response.headers.get('Location');",
+                  "pm.environment.set('bootstrapUsuarioLocation', loc);",
+                  "const m = /\\/api\\/v1\\/usuarios\\/(\\d+)$/.exec(loc||'');",
+                  "pm.test('ID de usuario extraído', () => pm.expect(m && m[1]).to.be.ok);",
+                  "if (m && m[1]) pm.environment.set('bootstrapUsuarioId', m[1]);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "01 • Create & Read",
+      "item": [
+        {
+          "name": "Criar Médico (201 + Location)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/medicos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "medicos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuarioId\": {{bootstrapUsuarioId}},\n  \"especialidadeId\": {{bootstrapEspecialidadeId}},\n  \"unidadeId\": {{bootstrapUnidadeId}},\n  \"crmNumero\": \"{{medicoCrmNumeroRand}}\",\n  \"crmUf\": \"{{medicoCrmUf}}\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created (medico)', () => pm.response.to.have.status(201));",
+                  "pm.test('Location presente', () => pm.expect(pm.response.headers.has('Location')).to.be.true);",
+                  "const loc = pm.response.headers.get('Location');",
+                  "pm.environment.set('medicoLocation', loc);",
+                  "const m = /\\/api\\/v1\\/medicos\\/(\\d+)$/.exec(loc||'');",
+                  "pm.test('usuarioId (PK) do médico extraído', () => pm.expect(m && m[1]).to.be.ok);",
+                  "if (m && m[1]) pm.environment.set('medicoUsuarioId', m[1]);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Médico por usuarioId (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/medicos/{{medicoUsuarioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "medicos",
+                "{{medicoUsuarioId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "['usuarioId','especialidadeId','unidadeId','crmNumero','crmUf','dataCriacao','dataUltimaEdicao'].forEach(k => pm.expect(b).to.have.property(k));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Médico por CRM (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/medicos/by-crm?numero={{medicoCrmNumeroRand}}&uf={{medicoCrmUf}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "medicos",
+                "by-crm?numero={{medicoCrmNumeroRand}}&uf={{medicoCrmUf}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "pm.test('retornou mesmo usuarioId', () => pm.expect(String(b.usuarioId)).to.eql(String(pm.environment.get('medicoUsuarioId'))));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 • Update (PUT) e GET",
+      "item": [
+        {
+          "name": "Atualizar Médico (204)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/medicos/{{medicoUsuarioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "medicos",
+                "{{medicoUsuarioId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"crmNumero\": \"{{medicoCrmNumeroRand}}\",\n  \"crmUf\": \"{{medicoCrmUf}}\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET após Update (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/medicos/{{medicoUsuarioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "medicos",
+                "{{medicoUsuarioId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "['usuarioId','especialidadeId','unidadeId','crmNumero','crmUf','dataCriacao','dataUltimaEdicao'].forEach(k => pm.expect(b).to.have.property(k));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 • Listagens",
+      "item": [
+        {
+          "name": "Listar geral (page=0,size=10)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/medicos?page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "medicos?page=0&size=10"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('é lista', () => pm.expect(Array.isArray(pm.response.json())).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar por especialidade",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/medicos?especialidadeId={{bootstrapEspecialidadeId}}&page=0&size=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "medicos?especialidadeId={{bootstrapEspecialidadeId}}&page=0&size=5"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('é lista', () => pm.expect(Array.isArray(pm.response.json())).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar por unidade",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/medicos?unidadeId={{bootstrapUnidadeId}}&page=0&size=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "medicos?unidadeId={{bootstrapUnidadeId}}&page=0&size=5"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('é lista', () => pm.expect(Array.isArray(pm.response.json())).to.be.true);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 • Negativos & Validações",
+      "item": [
+        {
+          "name": "Criar Médico sem campos obrigatórios (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/medicos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "medicos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuarioId\": null,\n  \"especialidadeId\": null,\n  \"unidadeId\": null,\n  \"crmNumero\": \"\",\n  \"crmUf\": \"\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 Bad Request', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Criar Médico com UF inválida (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/medicos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "medicos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuarioId\": {{bootstrapUsuarioId}},\n  \"especialidadeId\": {{bootstrapEspecialidadeId}},\n  \"unidadeId\": {{bootstrapUnidadeId}},\n  \"crmNumero\": \"{{medicoCrmNumeroRand}}\",\n  \"crmUf\": \"P\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 Bad Request', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Criar Médico com CRM duplicado (4xx)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/medicos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "medicos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuarioId\": {{bootstrapUsuarioId}},\n  \"especialidadeId\": {{bootstrapEspecialidadeId}},\n  \"unidadeId\": {{bootstrapUnidadeId}},\n  \"crmNumero\": \"{{medicoCrmNumeroRand}}\",\n  \"crmUf\": \"{{medicoCrmUf}}\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Falha por unicidade CRM (4xx)', () => pm.expect(pm.response.code).to.be.within(400,499));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET inexistente (404)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/medicos/9999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "medicos",
+                "9999999"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "99 • Cleanup (opcional)",
+      "item": [
+        {
+          "name": "Limpar variáveis do ambiente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/medicos?page=0&size=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "medicos?page=0&size=1"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "['medicoCrmNumeroRand','usuarioEmailRand','usuarioNomeRand','medicoUsuarioId','bootstrapUsuarioId','bootstrapEspecialidadeId','bootstrapUnidadeId','medicoLocation','bootstrapUsuarioLocation'].forEach(k=>pm.environment.unset(k));",
+                  "pm.test('Variáveis limpas', () => true);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

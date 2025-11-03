@@ -3,8 +3,11 @@ package com.mmx.medimetrix.application.medico.service;
 import com.mmx.medimetrix.application.medico.commands.MedicoCreate;
 import com.mmx.medimetrix.application.medico.commands.MedicoUpdate;
 import com.mmx.medimetrix.application.medico.exceptions.MedicoNaoEncontradoException;
+import com.mmx.medimetrix.application.medico.exceptions.CrmDuplicadoException;
 import com.mmx.medimetrix.application.medico.port.out.MedicoDao;
 import com.mmx.medimetrix.domain.core.Medico;
+import org.springframework.core.NestedExceptionUtils;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,13 +28,37 @@ public class MedicoServiceImpl implements MedicoService {
 
     @Override
     public Long create(MedicoCreate cmd) {
-        Medico m = new Medico();
-        m.setUsuarioId(cmd.getUsuarioId());
-        m.setEspecialidadeId(cmd.getEspecialidadeId());
-        m.setUnidadeId(cmd.getUnidadeId());
-        m.setCrmNumero(cmd.getCrmNumero());
-        m.setCrmUf(cmd.getCrmUf());
-        return dao.insert(m);
+        // normalizações simples (opcional, mas ajuda a consistência)
+        String numero = cmd.getCrmNumero() == null ? null : cmd.getCrmNumero().trim();
+        String uf     = cmd.getCrmUf() == null ? null : cmd.getCrmUf().trim().toUpperCase();
+
+        // 1) validação explícita de duplicidade
+        dao.findByCrm(numero, uf)
+                .ifPresent(m -> { throw new CrmDuplicadoException(numero, uf); });
+
+        try {
+            Medico m = new Medico();
+            m.setUsuarioId(cmd.getUsuarioId());
+            m.setEspecialidadeId(cmd.getEspecialidadeId());
+            m.setUnidadeId(cmd.getUnidadeId());
+            m.setCrmNumero(numero);
+            m.setCrmUf(uf);
+            return dao.insert(m);
+
+        } catch (DataIntegrityViolationException e) {
+            // 2) fallback: se bater UNIQUE no banco por corrida, traduz para exceção de domínio
+            Throwable root = NestedExceptionUtils.getMostSpecificCause(e);
+            String sqlState = null;
+            try {
+                // disponível quando Postgres
+                sqlState = (String) root.getClass().getMethod("getSQLState").invoke(root);
+            } catch (Exception ignore) {}
+
+            if ("23505".equals(sqlState)) { // unique_violation no Postgres
+                throw new CrmDuplicadoException(numero, uf);
+            }
+            throw e; // outras violações seguem o fluxo padrão
+        }
     }
 
     @Override

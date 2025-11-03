@@ -1,6 +1,7 @@
 package com.mmx.medimetrix.web.api.v1.meta;
 
 import com.mmx.medimetrix.application.meta.commands.MetaCreate;
+import com.mmx.medimetrix.application.meta.commands.MetaUpdate;
 import com.mmx.medimetrix.application.meta.queries.MetaFiltro;
 import com.mmx.medimetrix.application.meta.service.MetaService;
 import com.mmx.medimetrix.web.api.v1.meta.dto.MetaCreateDTO;
@@ -80,8 +81,7 @@ public class MetaController {
     @PutMapping("/{id}")
     public ResponseEntity<Void> update(@PathVariable Long id,
                                        @Valid @RequestBody MetaUpdateDTO dto) {
-        service.update(
-                id,
+        service.update(id, new MetaUpdate(
                 dto.idCriterio(),
                 dto.idUnidade(),
                 dto.idEspecialidade(),
@@ -92,7 +92,7 @@ public class MetaController {
                 dto.ativo(),
                 dto.prioridade(),
                 dto.justificativa()
-        );
+        ));
         return ResponseEntity.noContent().build();
     }
 

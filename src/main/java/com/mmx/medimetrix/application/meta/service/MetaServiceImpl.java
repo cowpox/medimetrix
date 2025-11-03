@@ -1,6 +1,7 @@
 package com.mmx.medimetrix.application.meta.service;
 
 import com.mmx.medimetrix.application.meta.commands.MetaCreate;
+import com.mmx.medimetrix.application.meta.commands.MetaUpdate;
 import com.mmx.medimetrix.application.meta.port.out.MetaDao;
 import com.mmx.medimetrix.application.meta.queries.MetaFiltro;
 import com.mmx.medimetrix.domain.core.Meta;
@@ -39,23 +40,24 @@ public class MetaServiceImpl implements MetaService {
     }
 
     @Override
-    public Meta update(Long id, Long idCriterio, Long idUnidade, Long idEspecialidade,
-                       java.math.BigDecimal alvo, String operador,
-                       java.time.LocalDate vigenciaInicio, java.time.LocalDate vigenciaFim,
-                       Boolean ativo, Integer prioridade, String justificativa) {
-        Meta atual = dao.findById(id).orElseThrow(() -> new NoSuchElementException("Meta não encontrada."));
-        if (idCriterio != null) atual.setIdCriterio(idCriterio);
-        if (idUnidade != null) atual.setIdUnidade(idUnidade);
-        if (idEspecialidade != null) atual.setIdEspecialidade(idEspecialidade);
-        if (alvo != null) atual.setAlvo(alvo);
-        if (operador != null) atual.setOperador(operador);
-        if (vigenciaInicio != null) atual.setVigenciaInicio(vigenciaInicio);
-        if (vigenciaFim != null) atual.setVigenciaFim(vigenciaFim);
-        if (ativo != null) atual.setAtivo(ativo);
-        if (prioridade != null) atual.setPrioridade(prioridade);
-        if (justificativa != null) atual.setJustificativa(justificativa);
+    public Meta update(Long id, MetaUpdate cmd) {
+        Meta atual = dao.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Meta não encontrada."));
+
+        if (cmd.idCriterio() != null)     atual.setIdCriterio(cmd.idCriterio());
+        if (cmd.idUnidade() != null)      atual.setIdUnidade(cmd.idUnidade());
+        if (cmd.idEspecialidade() != null)atual.setIdEspecialidade(cmd.idEspecialidade());
+        if (cmd.alvo() != null)           atual.setAlvo(cmd.alvo());
+        if (cmd.operador() != null)       atual.setOperador(cmd.operador());
+        if (cmd.vigenciaInicio() != null) atual.setVigenciaInicio(cmd.vigenciaInicio());
+        if (cmd.vigenciaFim() != null)    atual.setVigenciaFim(cmd.vigenciaFim());
+        if (cmd.ativo() != null)          atual.setAtivo(cmd.ativo());
+        if (cmd.prioridade() != null)     atual.setPrioridade(cmd.prioridade());
+        if (cmd.justificativa() != null)  atual.setJustificativa(cmd.justificativa());
+
         dao.update(atual);
-        return dao.findById(id).orElseThrow(() -> new NoSuchElementException("Meta não encontrada após atualizar."));
+        return dao.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Meta não encontrada após atualizar."));
     }
 
     @Override public Optional<Meta> findById(Long id) { return dao.findById(id); }

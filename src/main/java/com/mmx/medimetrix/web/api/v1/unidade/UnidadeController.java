@@ -1,6 +1,7 @@
 package com.mmx.medimetrix.web.api.v1.unidade;
 
 import com.mmx.medimetrix.application.unidade.commands.UnidadeCreate;
+import com.mmx.medimetrix.application.unidade.commands.UnidadeUpdate;
 import com.mmx.medimetrix.application.unidade.queries.UnidadeFiltro;
 import com.mmx.medimetrix.application.unidade.service.UnidadeService;
 import com.mmx.medimetrix.domain.core.Unidade;
@@ -34,7 +35,7 @@ public class UnidadeController {
     @PostMapping
     public ResponseEntity<Void> create(@Valid @RequestBody UnidadeCreateDTO dto,
                                        UriComponentsBuilder uriBuilder) {
-        Unidade created = service.create(new UnidadeCreate(dto.nome()));
+        Unidade created = service.create(new UnidadeCreate(dto.nome(), dto.gestorUsuarioId()));
         URI location = uriBuilder.path("/api/v1/unidades/{id}")
                 .buildAndExpand(created.getIdUnidade())
                 .toUri();
@@ -71,9 +72,15 @@ public class UnidadeController {
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void update(@PathVariable Long id, @Valid @RequestBody UnidadeUpdateDTO dto) {
-        // service pode retornar Unidade; ignoramos o corpo para manter o padrão 204
-        service.update(id, dto.nome(), dto.ativo());
+        // Validação simples: pelo menos um campo para alterar
+        if (dto.nome() == null && dto.gestorUsuarioId() == null && dto.ativo() == null) {
+            throw new IllegalArgumentException("Informe ao menos um campo para atualização.");
+        }
+
+        var cmd = new UnidadeUpdate(id, dto.nome(), dto.gestorUsuarioId(), dto.ativo());
+        service.update(cmd); // usa o novo métoodo da service
     }
+
 
     // DELETE (desativar) -> 204 No Content
     @DeleteMapping("/{id}")

@@ -7,6 +7,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import com.mmx.medimetrix.application.medico.exceptions.CrmDuplicadoException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.core.NestedExceptionUtils;
 
 @ControllerAdvice
 @Order(2) // vem depois do de validação
@@ -41,6 +44,41 @@ public class ProblemDetailsHandler {
         ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.CONFLICT);
         pd.setTitle("Conflict");
         pd.setDetail(ex.getMessage());
+        return pd;
+    }
+
+    // 409 – Regra de negócio: CRM duplicado
+    @ExceptionHandler(CrmDuplicadoException.class)
+    public ProblemDetail crmDuplicado(CrmDuplicadoException ex) {
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.CONFLICT);
+        pd.setTitle("Conflict");
+        pd.setDetail(ex.getMessage()); // "Já existe médico com CRM 12345-PR"
+        pd.setProperty("code", "CRM_DUPLICADO");
+        return pd;
+    }
+
+    // 409 – Fallback: violação de unicidade vinda do banco (SQLState 23505)
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ProblemDetail dataIntegrity(DataIntegrityViolationException ex) {
+        Throwable root = NestedExceptionUtils.getMostSpecificCause(ex);
+        String sqlState = null;
+        try {
+            sqlState = (String) root.getClass().getMethod("getSQLState").invoke(root);
+        } catch (Exception ignore) { /* no-op */ }
+
+        if ("23505".equals(sqlState)) { // unique_violation (PostgreSQL)
+            ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.CONFLICT);
+            pd.setTitle("Conflict");
+            pd.setDetail("Violação de unicidade.");
+            pd.setProperty("code", "UNIQUE_CONSTRAINT");
+            return pd;
+        }
+
+        // Se não for unicidade, trate como 400 genérico de integridade
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        pd.setTitle("Bad request");
+        pd.setDetail(root != null ? root.getMessage() : ex.getMessage());
+        pd.setProperty("code", "DATA_INTEGRITY");
         return pd;
     }
 

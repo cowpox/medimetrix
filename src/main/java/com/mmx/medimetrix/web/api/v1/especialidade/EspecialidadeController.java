@@ -1,6 +1,7 @@
 package com.mmx.medimetrix.web.api.v1.especialidade;
 
 import com.mmx.medimetrix.application.especialidade.commands.EspecialidadeCreate;
+import com.mmx.medimetrix.application.especialidade.commands.EspecialidadeUpdate;
 import com.mmx.medimetrix.application.especialidade.queries.EspecialidadeFiltro;
 import com.mmx.medimetrix.application.especialidade.service.EspecialidadeService;
 import com.mmx.medimetrix.domain.core.Especialidade;
@@ -18,6 +19,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
+import org.springframework.util.StringUtils;
+
 
 @RestController
 @RequestMapping("/api/v1/especialidades")
@@ -71,7 +74,11 @@ public class EspecialidadeController {
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void update(@PathVariable Long id, @Valid @RequestBody EspecialidadeUpdateDTO dto) {
-        service.update(id, dto.nome(), dto.ativo());
+        var cmd = new EspecialidadeUpdate(
+                StringUtils.hasText(dto.nome()) ? dto.nome().trim() : null,
+                dto.ativo()
+        );
+        service.update(id, cmd);
     }
 
     // DELETE (desativar) -> 204 No Content

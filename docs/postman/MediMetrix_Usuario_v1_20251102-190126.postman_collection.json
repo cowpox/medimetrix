@@ -1,0 +1,903 @@
+{
+  "info": {
+    "name": "MediMetrix • Usuario (v1)",
+    "_postman_id": "Usuario-20251102-190126",
+    "description": "Testes completos do recurso Usuario conforme UsuarioController/DTOs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00 • Smoke & Listagem",
+      "item": [
+        {
+          "name": "Listar (default)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"200 OK\", function(){ pm.response.to.have.status(200); });",
+                  "let b;",
+                  "try { b = pm.response.json(); } catch(e) { pm.expect.fail(\"Body não é JSON\"); }",
+                  "pm.test(\"Lista de UsuarioResponseDTO\", function(){ pm.expect(Array.isArray(b)).to.be.true; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar (paginado page=0,size=10, sort=NOME,asc=true)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios?page=0&size=10&sort=NOME&asc=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios?page=0&size=10&sort=NOME&asc=true"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"200 OK\", function(){ pm.response.to.have.status(200); });",
+                  "let b;",
+                  "try { b = pm.response.json(); } catch(e) { pm.expect.fail(\"Body não é JSON\"); }",
+                  "pm.test(\"Lista de UsuarioResponseDTO\", function(){ pm.expect(Array.isArray(b)).to.be.true; });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "01 • Create & Read",
+      "item": [
+        {
+          "name": "Criar Usuario (201 + Location, sem body)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"{{nomeRand}}\",\n  \"email\": \"{{emailRand}}\",\n  \"papel\": \"MEDICO\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"201 Created\", function(){ pm.response.to.have.status(201); });",
+                  "pm.test(\"Location header presente\", function(){ pm.expect(pm.response.headers.has('Location')).to.be.true; });",
+                  "const loc = pm.response.headers.get('Location');",
+                  "pm.environment.set(\"usuarioLocation\", loc);",
+                  "// Extrai o ID do final da URL /api/v1/usuarios/{id}",
+                  "const match = /\\/api\\/v1\\/usuarios\\/(\\d+)$/.exec(loc || \"\");",
+                  "pm.test(\"ID extraído da Location\", function(){",
+                  "  pm.expect(match && match[1]).to.be.ok;",
+                  "});",
+                  "if (match && match[1]) { pm.environment.set(\"usuarioId\", match[1]); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obter por ID (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "{{usuarioId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"200 OK\", function(){ pm.response.to.have.status(200); });",
+                  "const b = pm.response.json();",
+                  "pm.test(\"DTO de Usuario - campos essenciais\", function(){",
+                  "  [\"id\",\"nome\",\"email\",\"papel\",\"ativo\",\"dataCriacao\",\"dataUltimaEdicao\"].forEach(k => pm.expect(b).to.have.property(k));",
+                  "});",
+                  "pm.environment.set(\"usuarioAtivo\", String(b.ativo));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 • Update (PUT) e GET",
+      "item": [
+        {
+          "name": "Atualizar Usuario (PUT 204)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "{{usuarioId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"{{nomeRand}} (Edit)\",\n  \"email\": \"{{emailRand}}\",\n  \"papel\": \"GESTOR\",\n  \"ativo\": true\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"204 No Content\", function(){ pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET após PUT (confirmar mudança)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "{{usuarioId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"200 OK\", function(){ pm.response.to.have.status(200); });",
+                  "const b = pm.response.json();",
+                  "pm.test(\"DTO de Usuario - campos essenciais\", function(){",
+                  "  [\"id\",\"nome\",\"email\",\"papel\",\"ativo\",\"dataCriacao\",\"dataUltimaEdicao\"].forEach(k => pm.expect(b).to.have.property(k));",
+                  "});",
+                  "pm.environment.set(\"usuarioAtivo\", String(b.ativo));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 • PATCH desativar/reativar",
+      "item": [
+        {
+          "name": "Desativar (204)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}/desativar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "{{usuarioId}}",
+                "desativar"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"204 No Content\", function(){ pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET após desativar",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "{{usuarioId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"200 OK\", function(){ pm.response.to.have.status(200); });",
+                  "const b = pm.response.json();",
+                  "pm.test(\"DTO de Usuario - campos essenciais\", function(){",
+                  "  [\"id\",\"nome\",\"email\",\"papel\",\"ativo\",\"dataCriacao\",\"dataUltimaEdicao\"].forEach(k => pm.expect(b).to.have.property(k));",
+                  "});",
+                  "pm.environment.set(\"usuarioAtivo\", String(b.ativo));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reativar (204)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}/reativar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "{{usuarioId}}",
+                "reativar"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"204 No Content\", function(){ pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET após reativar",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "{{usuarioId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"200 OK\", function(){ pm.response.to.have.status(200); });",
+                  "const b = pm.response.json();",
+                  "pm.test(\"DTO de Usuario - campos essenciais\", function(){",
+                  "  [\"id\",\"nome\",\"email\",\"papel\",\"ativo\",\"dataCriacao\",\"dataUltimaEdicao\"].forEach(k => pm.expect(b).to.have.property(k));",
+                  "});",
+                  "pm.environment.set(\"usuarioAtivo\", String(b.ativo));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 • Busca/Filters",
+      "item": [
+        {
+          "name": "Buscar por termo (nome)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios?termo=Teste&page=0&size=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios?termo=Teste&page=0&size=5"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"200 OK\", function(){ pm.response.to.have.status(200); });",
+                  "let b = pm.response.json();",
+                  "pm.test(\"Retorno é lista\", function(){ pm.expect(Array.isArray(b)).to.be.true; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Filtrar por papel=MEDICO",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios?papel=MEDICO&page=0&size=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios?papel=MEDICO&page=0&size=5"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"200 OK\", function(){ pm.response.to.have.status(200); });",
+                  "let b = pm.response.json();",
+                  "pm.test(\"Retorno é lista\", function(){ pm.expect(Array.isArray(b)).to.be.true; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Filtrar por ativo=true",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios?ativo=true&page=0&size=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios?ativo=true&page=0&size=5"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"200 OK\", function(){ pm.response.to.have.status(200); });",
+                  "let b = pm.response.json();",
+                  "pm.test(\"Retorno é lista\", function(){ pm.expect(Array.isArray(b)).to.be.true; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Size inválido > 200 (espera 400)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios?page=0&size=500",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios?page=0&size=500"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"Tamanho inválido → 400\", function(){ pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 • Negativos",
+      "item": [
+        {
+          "name": "Criar com PAPEL inválido (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"{{nomeRand}}\",\n  \"email\": \"{{emailRand}}\",\n  \"papel\": \"INVALIDO\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"Papel inválido → 400\", function(){ pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Criar base para duplicado (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Duplicado A\",\n  \"email\": \"duplicado@mmx.com.br\",\n  \"papel\": \"MEDICO\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"201 Created\", function(){ pm.response.to.have.status(201); });",
+                  "pm.test(\"Location header presente\", function(){ pm.expect(pm.response.headers.has('Location')).to.be.true; });",
+                  "const loc = pm.response.headers.get('Location');",
+                  "pm.environment.set(\"usuarioLocation\", loc);",
+                  "// Extrai o ID do final da URL /api/v1/usuarios/{id}",
+                  "const match = /\\/api\\/v1\\/usuarios\\/(\\d+)$/.exec(loc || \"\");",
+                  "pm.test(\"ID extraído da Location\", function(){",
+                  "  pm.expect(match && match[1]).to.be.ok;",
+                  "});",
+                  "if (match && match[1]) { pm.environment.set(\"usuarioId\", match[1]); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Criar com e-mail duplicado (409/400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Duplicado B\",\n  \"email\": \"duplicado@mmx.com.br\",\n  \"papel\": \"MEDICO\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"Conflito por e-mail (409)\", function(){",
+                  "  pm.response.to.have.status.oneOf([409,400]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 • Delete",
+      "item": [
+        {
+          "name": "Excluir (204)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "{{usuarioId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"204 No Content\", function(){ pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET após delete (espera 404)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "{{usuarioId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 após delete', function(){ pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "",
+          "// Pre-request: unique email per run",
+          "const now = Date.now();",
+          "const rnd = Math.floor(Math.random() * 100000);",
+          "pm.environment.set(\"emailRand\", `adriano.${now}.${rnd}@mmx.com.br`);",
+          "pm.environment.set(\"nomeRand\", `Usuário Teste ${rnd}`);"
+        ]
+      }
+    }
+  ]
+}

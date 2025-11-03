@@ -1,6 +1,7 @@
 package com.mmx.medimetrix.application.especialidade.service;
 
 import com.mmx.medimetrix.application.especialidade.commands.EspecialidadeCreate;
+import com.mmx.medimetrix.application.especialidade.commands.EspecialidadeUpdate;
 import com.mmx.medimetrix.application.especialidade.port.out.EspecialidadeDao;
 import com.mmx.medimetrix.application.especialidade.queries.EspecialidadeFiltro;
 import com.mmx.medimetrix.domain.core.Especialidade;
@@ -35,17 +36,19 @@ public class EspecialidadeServiceImpl implements EspecialidadeService {
     }
 
     @Override
-    public Especialidade update(Long id, String nome, Boolean ativo) {
+    public Especialidade update(Long id, EspecialidadeUpdate cmd) {
         Especialidade atual = dao.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Especialidade não encontrada."));
 
-        if (StringUtils.hasText(nome)) atual.setNome(nome.trim());
-        if (ativo != null)            atual.setAtivo(ativo);
+        if (StringUtils.hasText(cmd.nome())) atual.setNome(cmd.nome().trim());
+        if (cmd.ativo() != null)            atual.setAtivo(cmd.ativo());
 
         dao.update(atual);
         return dao.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Especialidade não encontrada após atualizar."));
     }
+
+
 
     @Override
     public Optional<Especialidade> findById(Long id) {

@@ -2,8 +2,11 @@ package com.mmx.medimetrix.web.api.v1.unidade.dto;
 
 import jakarta.validation.constraints.Size;
 
+/**
+ * DTO para atualização parcial de Unidade.
+ */
 public record UnidadeUpdateDTO(
-        @Size(max = 120, message = "Nome deve ter no máximo 120 caracteres.")
-        String nome,
+        @Size(min = 2, max = 120) String nome,
+        Long gestorUsuarioId,
         Boolean ativo
 ) {}
