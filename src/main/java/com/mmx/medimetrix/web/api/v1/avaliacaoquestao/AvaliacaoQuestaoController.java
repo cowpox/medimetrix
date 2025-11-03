@@ -93,7 +93,11 @@ public class AvaliacaoQuestaoController {
     public ResponseEntity<Void> swap(@PathVariable @Positive Long idAvaliacao,
                                      @RequestParam @Positive Long idQuestaoA,
                                      @RequestParam @Positive Long idQuestaoB) {
+        if (idQuestaoA.equals(idQuestaoB)) {
+            throw new IllegalArgumentException("idQuestaoA e idQuestaoB devem ser diferentes");
+        }
         service.swapOrdem(idAvaliacao, idQuestaoA, idQuestaoB);
         return ResponseEntity.noContent().build();
     }
+
 }

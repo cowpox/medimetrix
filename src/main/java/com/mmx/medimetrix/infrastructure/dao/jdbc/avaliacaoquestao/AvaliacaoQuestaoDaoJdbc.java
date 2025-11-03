@@ -68,14 +68,57 @@ public class AvaliacaoQuestaoDaoJdbc implements AvaliacaoQuestaoDao {
     @Override
     @Transactional
     public int swapOrdem(Long idAvaliacao, Long idQuestaoA, Long idQuestaoB) {
-        // Troca atomica de ORDEM entre duas questões da mesma avaliação
-        final String getSql = "SELECT ORDEM FROM MEDIMETRIX.AVALIACAO_QUESTAO WHERE ID_AVALIACAO = ? AND ID_QUESTAO = ?";
-        Integer ordemA = jdbc.queryForObject(getSql, Integer.class, idAvaliacao, idQuestaoA);
-        Integer ordemB = jdbc.queryForObject(getSql, Integer.class, idAvaliacao, idQuestaoB);
+        if (idQuestaoA.equals(idQuestaoB)) return 0;
 
-        final String upd = "UPDATE MEDIMETRIX.AVALIACAO_QUESTAO SET ORDEM = ?, DATA_ULTIMA_EDICAO = CURRENT_TIMESTAMP WHERE ID_AVALIACAO = ? AND ID_QUESTAO = ?";
-        int r1 = jdbc.update(upd, ordemB, idAvaliacao, idQuestaoA);
-        int r2 = jdbc.update(upd, ordemA, idAvaliacao, idQuestaoB);
-        return r1 + r2;
+        // 1) Trava as duas linhas e lê as ordens
+        final String lockSql = """
+        SELECT ID_QUESTAO, ORDEM
+        FROM MEDIMETRIX.AVALIACAO_QUESTAO
+        WHERE ID_AVALIACAO = ? AND ID_QUESTAO IN (?, ?)
+        FOR UPDATE
+        """;
+        var rows = jdbc.query(lockSql,
+                (rs, i) -> new Object[]{ rs.getLong("ID_QUESTAO"), rs.getInt("ORDEM") },
+                idAvaliacao, idQuestaoA, idQuestaoB);
+
+        if (rows.size() < 2) return 0; // 404 no service
+
+        Integer ordemA = null, ordemB = null;
+        for (Object[] r : rows) {
+            Long idQ = (Long) r[0];
+            Integer ord = (Integer) r[1];
+            if (idQ.equals(idQuestaoA)) ordemA = ord;
+            else if (idQ.equals(idQuestaoB)) ordemB = ord;
+        }
+        if (ordemA == null || ordemB == null) return 0;
+
+        // 2) Sentinela garantidamente livre (evita corrida com MAX+1)
+        final int TEMP = 2_147_483_647; // Integer.MAX_VALUE
+
+        // 3) A -> TEMP
+        int r1 = jdbc.update("""
+        UPDATE MEDIMETRIX.AVALIACAO_QUESTAO
+        SET ORDEM = ?, DATA_ULTIMA_EDICAO = CURRENT_TIMESTAMP
+        WHERE ID_AVALIACAO = ? AND ID_QUESTAO = ?
+        """, TEMP, idAvaliacao, idQuestaoA);
+
+        // 4) B -> ordemA
+        int r2 = jdbc.update("""
+        UPDATE MEDIMETRIX.AVALIACAO_QUESTAO
+        SET ORDEM = ?, DATA_ULTIMA_EDICAO = CURRENT_TIMESTAMP
+        WHERE ID_AVALIACAO = ? AND ID_QUESTAO = ?
+        """, ordemA, idAvaliacao, idQuestaoB);
+
+        // 5) A -> ordemB
+        int r3 = jdbc.update("""
+        UPDATE MEDIMETRIX.AVALIACAO_QUESTAO
+        SET ORDEM = ?, DATA_ULTIMA_EDICAO = CURRENT_TIMESTAMP
+        WHERE ID_AVALIACAO = ? AND ID_QUESTAO = ?
+        """, ordemB, idAvaliacao, idQuestaoA);
+
+        return r1 + r2 + r3; // esperado: 3
     }
+
+
+
 }

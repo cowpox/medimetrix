@@ -8,3 +8,5 @@ public class AvaliacaoQuestaoNaoEncontradaException extends RuntimeException {
         super(message);
     }
 }
+
+

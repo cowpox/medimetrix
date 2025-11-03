@@ -87,6 +87,9 @@ public class AvaliacaoQuestaoServiceImpl implements AvaliacaoQuestaoService {
     @Override
     public void swapOrdem(Long idAvaliacao, Long idQuestaoA, Long idQuestaoB) {
         int rows = dao.swapOrdem(idAvaliacao, idQuestaoA, idQuestaoB);
-        if (rows == 0) throw new AvaliacaoQuestaoNaoEncontradaException("Não foi possível reordenar as questões");
+        if (rows < 3) {
+            throw new AvaliacaoQuestaoNaoEncontradaException("Não foi possível reordenar as questões");
+        }
     }
+
 }

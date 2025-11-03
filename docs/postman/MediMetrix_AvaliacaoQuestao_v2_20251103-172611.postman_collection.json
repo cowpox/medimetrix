@@ -1,0 +1,566 @@
+{
+  "info": {
+    "_postman_id": "mmx-col-avq-20251103-172611",
+    "name": "MediMetrix - AvaliacaoQuestao (v2)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Suite de testes da entidade AvaliacaoQuestao corrigida (URLs e colisões de ORDEM evitadas)."
+  },
+  "item": [
+    {
+      "name": "0 - Smoke",
+      "item": [
+        {
+          "name": "GET list (smoke)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "protocol": "http",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "api",
+                "v1",
+                "avaliacoes",
+                "{{idAvaliacao}}",
+                "questoes"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Content-Type JSON\", function () {",
+                  "    const ct = pm.response.headers.get(\"Content-Type\") || \"\";",
+                  "    pm.expect(ct.toLowerCase()).to.include(\"application/json\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1 - Create & Read",
+      "item": [
+        {
+          "name": "POST create (idQuestaoA) -> 201 + Location",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"idQuestao\": \"{{idQuestaoA}}\", \"ordem\": \"{{aq_ordem_a}}\", \"obrigatoriaNaAval\": true, \"ativaNaAval\": true, \"pesoNaAval\": \"{{aq_peso}}\", \"visivelParaGestorLocal\": true, \"observacaoAdmin\": \"{{aq_observ}}\"}"
+            },
+            "url": {
+              "protocol": "http",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "api",
+                "v1",
+                "avaliacoes",
+                "{{idAvaliacao}}",
+                "questoes"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 201 Created\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"Location header presente\", function () { pm.response.to.have.header(\"Location\"); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET one (A) -> 200",
+          "request": {
+            "method": "GET",
+            "url": {
+              "protocol": "http",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "api",
+                "v1",
+                "avaliacoes",
+                "{{idAvaliacao}}",
+                "questoes",
+                "{{idQuestaoA}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Content-Type JSON\", function () {",
+                  "    const ct = pm.response.headers.get(\"Content-Type\") || \"\";",
+                  "    pm.expect(ct.toLowerCase()).to.include(\"application/json\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST create (idQuestaoB) -> 201 + Location",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"idQuestao\": \"{{idQuestaoB}}\", \"ordem\": \"{{aq_ordem_b}}\", \"obrigatoriaNaAval\": false, \"ativaNaAval\": true, \"pesoNaAval\": \"{{aq_peso}}\", \"visivelParaGestorLocal\": false, \"observacaoAdmin\": \"{{aq_observ}}\"}"
+            },
+            "url": {
+              "protocol": "http",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "api",
+                "v1",
+                "avaliacoes",
+                "{{idAvaliacao}}",
+                "questoes"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 201 Created\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"Location header presente\", function () { pm.response.to.have.header(\"Location\"); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET list -> 200",
+          "request": {
+            "method": "GET",
+            "url": {
+              "protocol": "http",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "api",
+                "v1",
+                "avaliacoes",
+                "{{idAvaliacao}}",
+                "questoes"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Content-Type JSON\", function () {",
+                  "    const ct = pm.response.headers.get(\"Content-Type\") || \"\";",
+                  "    pm.expect(ct.toLowerCase()).to.include(\"application/json\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2 - Update",
+      "item": [
+        {
+          "name": "PUT update (A) -> 204",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"ordem\": 2001, \"pesoNaAval\": \"2.50\", \"obrigatoriaNaAval\": false, \"visivelParaGestorLocal\": true, \"observacaoAdmin\": \"Atualizado via Postman\"}"
+            },
+            "url": {
+              "protocol": "http",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "api",
+                "v1",
+                "avaliacoes",
+                "{{idAvaliacao}}",
+                "questoes",
+                "{{idQuestaoA}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 204 No Content\", function () { pm.response.to.have.status(204); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET one (A) após update -> 200",
+          "request": {
+            "method": "GET",
+            "url": {
+              "protocol": "http",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "api",
+                "v1",
+                "avaliacoes",
+                "{{idAvaliacao}}",
+                "questoes",
+                "{{idQuestaoA}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Content-Type JSON\", function () {",
+                  "    const ct = pm.response.headers.get(\"Content-Type\") || \"\";",
+                  "    pm.expect(ct.toLowerCase()).to.include(\"application/json\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3 - Reordenar",
+      "item": [
+        {
+          "name": "POST /reordenar (A <-> B) -> 204",
+          "request": {
+            "method": "POST",
+            "url": {
+              "protocol": "http",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "api",
+                "v1",
+                "avaliacoes",
+                "{{idAvaliacao}}",
+                "questoes",
+                "reordenar"
+              ],
+              "query": [
+                {
+                  "key": "idQuestaoA",
+                  "value": "{{idQuestaoA}}"
+                },
+                {
+                  "key": "idQuestaoB",
+                  "value": "{{idQuestaoB}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 204 No Content\", function () { pm.response.to.have.status(204); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4 - Delete",
+      "item": [
+        {
+          "name": "DELETE one (A) -> 204",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "protocol": "http",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "api",
+                "v1",
+                "avaliacoes",
+                "{{idAvaliacao}}",
+                "questoes",
+                "{{idQuestaoA}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 204 No Content\", function () { pm.response.to.have.status(204); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET one (A) após delete -> 404",
+          "request": {
+            "method": "GET",
+            "url": {
+              "protocol": "http",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "api",
+                "v1",
+                "avaliacoes",
+                "{{idAvaliacao}}",
+                "questoes",
+                "{{idQuestaoA}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 404 Not Found\", function () { pm.response.to.have.status(404); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE all (?all=true) -> 204",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "protocol": "http",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "api",
+                "v1",
+                "avaliacoes",
+                "{{idAvaliacao}}",
+                "questoes"
+              ],
+              "query": [
+                {
+                  "key": "all",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 204 No Content\", function () { pm.response.to.have.status(204); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "9 - Negativos",
+      "item": [
+        {
+          "name": "GET one inexistente -> 404",
+          "request": {
+            "method": "GET",
+            "url": {
+              "protocol": "http",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "api",
+                "v1",
+                "avaliacoes",
+                "{{idAvaliacao}}",
+                "questoes",
+                "99999999"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 404 Not Found\", function () { pm.response.to.have.status(404); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST create inválido (sem campos obrigatórios) -> 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "protocol": "http",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "api",
+                "v1",
+                "avaliacoes",
+                "{{idAvaliacao}}",
+                "questoes"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 400 Bad Request\", function () { pm.response.to.have.status(400); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT update inexistente -> 404",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"ordem\": 7}"
+            },
+            "url": {
+              "protocol": "http",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "api",
+                "v1",
+                "avaliacoes",
+                "{{idAvaliacao}}",
+                "questoes",
+                "88888888"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 404 Not Found\", function () { pm.response.to.have.status(404); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
