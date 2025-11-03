@@ -1,6 +1,7 @@
 package com.mmx.medimetrix.application.avaliacao.service;
 
 import com.mmx.medimetrix.application.avaliacao.commands.AvaliacaoCreate;
+import com.mmx.medimetrix.application.avaliacao.commands.AvaliacaoUpdate;
 import com.mmx.medimetrix.domain.core.Avaliacao;
 
 import java.util.List;
@@ -8,7 +9,7 @@ import java.util.Optional;
 
 public interface AvaliacaoService {
     Long create(AvaliacaoCreate cmd);
-    void update(Long id, AvaliacaoCreate cmd);
+    void update(Long id, AvaliacaoUpdate cmd);
     Optional<Avaliacao> findById(Long id);
 
     // Listagens paginadas conforme DAO

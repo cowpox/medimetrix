@@ -1,6 +1,7 @@
 package com.mmx.medimetrix.application.questao.service;
 
 import com.mmx.medimetrix.application.questao.commands.QuestaoCreate;
+import com.mmx.medimetrix.application.questao.commands.QuestaoUpdate;
 import com.mmx.medimetrix.application.questao.port.out.QuestaoDao;
 import com.mmx.medimetrix.application.questao.queries.QuestaoFiltro;
 import com.mmx.medimetrix.domain.core.Questao;
@@ -43,34 +44,28 @@ public class QuestaoServiceImpl implements QuestaoService {
 
 
     @Override
-    public Questao update(Long id,
-                          String enunciado,
-                          String tipo,
-                          String obrigatoriedade,
-                          BigDecimal validacaoNumMin,      // <-- troque para BigDecimal
-                          BigDecimal validacaoNumMax,      // <-- troque para BigDecimal
-                          Integer tamanhoTextoMax,
-                          Boolean sensivel,
-                          Boolean visivelParaGestor,
-                          Boolean ativo,
-                          Integer ordemSugerida) {
+    public Questao update(Long id, QuestaoUpdate cmd) {
+        var atual = dao.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Questão não encontrada."));
 
-        var atual = dao.findById(id).orElseThrow(() -> new NoSuchElementException("Questão não encontrada."));
-
-        if (StringUtils.hasText(enunciado)) atual.setEnunciado(enunciado.trim());
-        if (tipo != null) atual.setTipo(tipo);
-        if (obrigatoriedade != null) atual.setObrigatoriedade(obrigatoriedade);
-        if (validacaoNumMin != null) atual.setValidacaoNumMin(validacaoNumMin);
-        if (validacaoNumMax != null) atual.setValidacaoNumMax(validacaoNumMax);
-        if (tamanhoTextoMax != null) atual.setTamanhoTextoMax(tamanhoTextoMax);
-        if (sensivel != null) atual.setSensivel(sensivel);
-        if (visivelParaGestor != null) atual.setVisivelParaGestor(visivelParaGestor);
-        if (ordemSugerida != null) atual.setOrdemSugerida(ordemSugerida);
-        if (ativo != null) atual.setAtivo(ativo);
+        if (cmd != null) {
+            if (StringUtils.hasText(cmd.enunciado())) atual.setEnunciado(cmd.enunciado().trim());
+            if (cmd.tipo() != null) atual.setTipo(cmd.tipo());
+            if (cmd.obrigatoriedade() != null) atual.setObrigatoriedade(cmd.obrigatoriedade());
+            if (cmd.validacaoNumMin() != null) atual.setValidacaoNumMin(cmd.validacaoNumMin());
+            if (cmd.validacaoNumMax() != null) atual.setValidacaoNumMax(cmd.validacaoNumMax());
+            if (cmd.tamanhoTextoMax() != null) atual.setTamanhoTextoMax(cmd.tamanhoTextoMax());
+            if (cmd.sensivel() != null) atual.setSensivel(cmd.sensivel());
+            if (cmd.visivelParaGestor() != null) atual.setVisivelParaGestor(cmd.visivelParaGestor());
+            if (cmd.ordemSugerida() != null) atual.setOrdemSugerida(cmd.ordemSugerida());
+            if (cmd.ativo() != null) atual.setAtivo(cmd.ativo());
+        }
 
         dao.update(atual);
-        return dao.findById(id).orElseThrow(() -> new NoSuchElementException("Questão não encontrada após atualizar."));
+        return dao.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Questão não encontrada após atualizar."));
     }
+
 
     @Override
     public Optional<Questao> findById(Long id) { return dao.findById(id); }

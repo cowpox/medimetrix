@@ -1,0 +1,699 @@
+{
+  "info": {
+    "name": "MediMetrix • Criterio (v1)",
+    "_postman_id": "Criterio-20251103-104854",
+    "description": "Testes completos do recurso Criterio conforme CriterioController/DTOs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00 • Smoke & Listagem",
+      "item": [
+        {
+          "name": "Listar (default)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/criterios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "criterios"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"200 OK\", function(){ pm.response.to.have.status(200); });",
+                  "const arr = pm.response.json();",
+                  "pm.test(\"É lista\", function(){ pm.expect(Array.isArray(arr)).to.be.true; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar (page=0,size=10)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/criterios?page={{page}}&size={{size}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "criterios"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"200 OK\", function(){ pm.response.to.have.status(200); });",
+                  "const arr = pm.response.json();",
+                  "pm.test(\"É lista\", function(){ pm.expect(Array.isArray(arr)).to.be.true; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buscar por nome (LIKE)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/criterios?nome={{nomeLike}}&page={{page}}&size={{size}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "criterios"
+              ],
+              "query": [
+                {
+                  "key": "nome",
+                  "value": "{{nomeLike}}"
+                },
+                {
+                  "key": "page",
+                  "value": "{{page}}"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"200 OK\", function(){ pm.response.to.have.status(200); });",
+                  "const arr = pm.response.json();",
+                  "pm.test(\"É lista\", function(){ pm.expect(Array.isArray(arr)).to.be.true; });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "01 • Create & Read",
+      "item": [
+        {
+          "name": "Criar Criterio (201 + Location)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/criterios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "criterios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"{{criterioNomeRand}}\",\n  \"definicaoOperacional\": \"Definição automática\",\n  \"descricao\": \"Descrição de teste\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"201 Created\", function(){ pm.response.to.have.status(201); });",
+                  "pm.test(\"Location presente\", function(){ pm.expect(pm.response.headers.has('Location')).to.be.true; });",
+                  "const loc = pm.response.headers.get('Location');",
+                  "pm.environment.set(\"criterioLocation\", loc);",
+                  "const m = /\\/api\\/v1\\/criterios\\/(\\d+)$/.exec(loc || \"\");",
+                  "pm.test(\"ID extraído\", function(){ pm.expect(m && m[1]).to.be.ok; });",
+                  "if (m && m[1]) pm.environment.set(\"criterioId\", m[1]);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obter por ID (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/criterios/{{criterioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "criterios",
+                "{{criterioId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"200 OK\", function(){ pm.response.to.have.status(200); });",
+                  "const b = pm.response.json();",
+                  "[\"id\",\"nome\",\"ativo\"].forEach(k => pm.expect(b).to.have.property(k));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 • Update (PUT) e GET",
+      "item": [
+        {
+          "name": "Atualizar (PUT 204)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/criterios/{{criterioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "criterios",
+                "{{criterioId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"{{criterioNomeRand}} (Edit)\",\n  \"definicaoOperacional\": \"Definição (rev)\",\n  \"descricao\": \"Descrição (rev)\",\n  \"ativo\": true\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', function(){ pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET após PUT (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/criterios/{{criterioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "criterios",
+                "{{criterioId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"200 OK\", function(){ pm.response.to.have.status(200); });",
+                  "const b = pm.response.json();",
+                  "[\"id\",\"nome\",\"ativo\"].forEach(k => pm.expect(b).to.have.property(k));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 • Desativar / Ativar",
+      "item": [
+        {
+          "name": "Desativar (DELETE 204)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/criterios/{{criterioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "criterios",
+                "{{criterioId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', function(){ pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET após desativar (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/criterios/{{criterioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "criterios",
+                "{{criterioId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"200 OK\", function(){ pm.response.to.have.status(200); });",
+                  "const b = pm.response.json();",
+                  "[\"id\",\"nome\",\"ativo\"].forEach(k => pm.expect(b).to.have.property(k));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ativar (POST 204)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/criterios/{{criterioId}}/ativar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "criterios",
+                "{{criterioId}}",
+                "ativar"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', function(){ pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET após ativar (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/criterios/{{criterioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "criterios",
+                "{{criterioId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"200 OK\", function(){ pm.response.to.have.status(200); });",
+                  "const b = pm.response.json();",
+                  "[\"id\",\"nome\",\"ativo\"].forEach(k => pm.expect(b).to.have.property(k));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 • Negativos & Validações",
+      "item": [
+        {
+          "name": "Criar com nome em branco (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/criterios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "criterios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"\",\n  \"definicaoOperacional\": \"x\",\n  \"descricao\": \"y\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"400 Bad Request\", function(){ pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar size=500 (400)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/criterios?page=0&size=500",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "criterios?page=0&size=500"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"400 Bad Request\", function(){ pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET inexistente (404)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/criterios/{{nonExistingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "criterios",
+                "{{nonExistingId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 Not Found', function(){ pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 • Opcional (Cleanup)",
+      "item": [
+        {
+          "name": "Desativar novamente (DELETE 204)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/criterios/{{criterioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "criterios",
+                "{{criterioId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', function(){ pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "",
+          "const rnd = Math.floor(Math.random()*100000);",
+          "pm.environment.set(\"criterioNomeRand\", `CRITÉRIO TESTE ${rnd}`);"
+        ]
+      }
+    }
+  ]
+}

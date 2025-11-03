@@ -1,6 +1,9 @@
 package com.mmx.medimetrix.application.avaliacao.service;
 
 import com.mmx.medimetrix.application.avaliacao.commands.AvaliacaoCreate;
+import com.mmx.medimetrix.application.avaliacao.commands.AvaliacaoUpdate;
+import com.mmx.medimetrix.application.avaliacao.exceptions.AvaliacaoEncerradaException;
+import com.mmx.medimetrix.application.avaliacao.exceptions.AvaliacaoJaPublicadaException;
 import com.mmx.medimetrix.application.avaliacao.exceptions.AvaliacaoNaoEncontradaException;
 import com.mmx.medimetrix.application.avaliacao.port.out.AvaliacaoDao;
 import com.mmx.medimetrix.domain.core.Avaliacao;
@@ -33,21 +36,40 @@ public class AvaliacaoServiceImpl implements AvaliacaoService {
     }
 
     @Override
-    public void update(Long id, AvaliacaoCreate cmd) {
+    public void update(Long id, AvaliacaoUpdate cmd) {
         Avaliacao atual = dao.findById(id)
                 .orElseThrow(AvaliacaoNaoEncontradaException::new);
 
-        atual.setIdAvaliacao(id);
-        if (cmd.getTitulo() != null) atual.setTitulo(cmd.getTitulo());
-        if (cmd.getDataInicioAplic() != null) atual.setDataInicioAplic(cmd.getDataInicioAplic());
-        if (cmd.getDataFimAplic() != null) atual.setDataFimAplic(cmd.getDataFimAplic());
-        if (cmd.getkMinimo() != null) atual.setkMinimo(cmd.getkMinimo());
-        if (cmd.getStatus() != null) atual.setStatus(cmd.getStatus());
-        if (cmd.getAtivo() != null) atual.setAtivo(cmd.getAtivo());
+        // Regras de negócio básicas
+        if ("ENCERRADA".equalsIgnoreCase(atual.getStatus())) {
+            throw new AvaliacaoEncerradaException();
+        }
+        if ("PUBLICADA".equalsIgnoreCase(atual.getStatus())) {
+            // ajuste conforme sua política; abaixo um exemplo mais restritivo
+            if (cmd.titulo() != null || cmd.dataInicioAplic() != null || cmd.dataFimAplic() != null
+                    || cmd.kMinimo() != null || cmd.status() != null) {
+                throw new AvaliacaoJaPublicadaException();
+            }
+        }
+
+        // Aplicação dos campos (somente se enviados)
+        if (cmd.titulo() != null) atual.setTitulo(cmd.titulo());
+        if (cmd.dataInicioAplic() != null) atual.setDataInicioAplic(cmd.dataInicioAplic());
+        if (cmd.dataFimAplic() != null) atual.setDataFimAplic(cmd.dataFimAplic());
+        if (cmd.kMinimo() != null) atual.setkMinimo(cmd.kMinimo());
+        if (cmd.status() != null) atual.setStatus(cmd.status());
+        if (cmd.ativo() != null) atual.setAtivo(cmd.ativo());
+
+        // Validação de datas se ambas presentes após merge
+        if (atual.getDataInicioAplic() != null && atual.getDataFimAplic() != null
+                && atual.getDataInicioAplic().isAfter(atual.getDataFimAplic())) {
+            throw new IllegalArgumentException("DATA_INICIO_APLIC deve ser ≤ DATA_FIM_APLIC.");
+        }
 
         int rows = dao.update(atual);
         if (rows == 0) throw new AvaliacaoNaoEncontradaException();
     }
+
 
     @Override
     @Transactional(readOnly = true)

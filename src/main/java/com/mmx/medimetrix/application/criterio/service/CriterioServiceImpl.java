@@ -1,6 +1,7 @@
 package com.mmx.medimetrix.application.criterio.service;
 
 import com.mmx.medimetrix.application.criterio.commands.CriterioCreate;
+import com.mmx.medimetrix.application.criterio.commands.CriterioUpdate;
 import com.mmx.medimetrix.application.criterio.port.out.CriterioDao;
 import com.mmx.medimetrix.application.criterio.queries.CriterioFiltro;
 import com.mmx.medimetrix.domain.core.Criterio;
@@ -35,15 +36,30 @@ public class CriterioServiceImpl implements CriterioService {
     }
 
     @Override
-    public Criterio update(Long id, String nome, String definicaoOperacional, String descricao, Boolean ativo) {
-        Criterio atual = dao.findById(id).orElseThrow(() -> new NoSuchElementException("Critério não encontrado."));
-        if (StringUtils.hasText(nome)) atual.setNome(nome.trim());
-        if (definicaoOperacional != null) atual.setDefinicaoOperacional(definicaoOperacional);
-        if (descricao != null) atual.setDescricao(descricao);
-        if (ativo != null) atual.setAtivo(ativo);
+    public Criterio update(Long id, CriterioUpdate cmd) {
+        Criterio atual = dao.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Critério não encontrado."));
+
+        if (cmd != null) {
+            if (StringUtils.hasText(cmd.nome())) {
+                atual.setNome(cmd.nome().trim());
+            }
+            if (cmd.definicaoOperacional() != null) {
+                atual.setDefinicaoOperacional(cmd.definicaoOperacional());
+            }
+            if (cmd.descricao() != null) {
+                atual.setDescricao(cmd.descricao());
+            }
+            if (cmd.ativo() != null) {
+                atual.setAtivo(cmd.ativo());
+            }
+        }
+
         dao.update(atual);
-        return dao.findById(id).orElseThrow(() -> new NoSuchElementException("Critério não encontrado após atualizar."));
+        return dao.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Critério não encontrado após atualizar."));
     }
+
 
     @Override
     public Optional<Criterio> findById(Long id) { return dao.findById(id); }

@@ -1,5 +1,6 @@
 package com.mmx.medimetrix.web.api.v1.avaliacao;
 
+import com.mmx.medimetrix.application.avaliacao.commands.AvaliacaoUpdate;
 import com.mmx.medimetrix.application.avaliacao.service.AvaliacaoService;
 import com.mmx.medimetrix.domain.core.Avaliacao;
 import com.mmx.medimetrix.web.api.v1.avaliacao.dto.AvaliacaoCreateDTO;
@@ -43,8 +44,14 @@ public class AvaliacaoController {
     // PUT -> 204 No Content
     @PutMapping("/{id}")
     public ResponseEntity<Void> update(@PathVariable Long id, @Valid @RequestBody AvaliacaoUpdateDTO dto) {
-        Avaliacao existente = service.findById(id).orElseThrow();
-        service.update(id, mapper.toCommand(dto, existente));
+        service.update(id, new AvaliacaoUpdate(
+                dto.getTitulo(),
+                dto.getDataInicioAplic(),
+                dto.getDataFimAplic(),
+                dto.getkMinimo(),
+                dto.getStatus(),
+                dto.getAtivo()
+        ));
         return ResponseEntity.noContent().build();
     }
 

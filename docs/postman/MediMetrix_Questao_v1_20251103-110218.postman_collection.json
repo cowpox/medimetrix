@@ -1,0 +1,679 @@
+{
+  "info": {
+    "name": "MediMetrix • Questao (v1)",
+    "_postman_id": "Questao-20251103-110218",
+    "description": "Testes do recurso Questao conforme QuestaoController/DTOs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "",
+          "const rnd = Math.floor(Math.random()*100000);",
+          "pm.environment.set(\"enunciadoRand\", `Questão de teste ${rnd}`);"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "00 • Smoke & Listagem",
+      "item": [
+        {
+          "name": "Listar (default)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/questoes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "questoes"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"200 OK\", function(){ pm.response.to.have.status(200); });",
+                  "const arr = pm.response.json();",
+                  "pm.test(\"É lista\", function(){ pm.expect(Array.isArray(arr)).to.be.true; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar (page=0,size=10)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/questoes?page={{page}}&size={{size}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "questoes"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"200 OK\", function(){ pm.response.to.have.status(200); });",
+                  "const arr = pm.response.json();",
+                  "pm.test(\"É lista\", function(){ pm.expect(Array.isArray(arr)).to.be.true; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Filtrar por enunciado LIKE",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/questoes?enunciado={{enunciadoLike}}&page={{page}}&size={{size}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "questoes"
+              ],
+              "query": [
+                {
+                  "key": "enunciado",
+                  "value": "{{enunciadoLike}}"
+                },
+                {
+                  "key": "page",
+                  "value": "{{page}}"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"200 OK\", function(){ pm.response.to.have.status(200); });",
+                  "const arr = pm.response.json();",
+                  "pm.test(\"É lista\", function(){ pm.expect(Array.isArray(arr)).to.be.true; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Filtrar por tipo",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/questoes?tipo={{tipoLike}}&page={{page}}&size={{size}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "questoes"
+              ],
+              "query": [
+                {
+                  "key": "tipo",
+                  "value": "{{tipoLike}}"
+                },
+                {
+                  "key": "page",
+                  "value": "{{page}}"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"200 OK\", function(){ pm.response.to.have.status(200); });",
+                  "const arr = pm.response.json();",
+                  "pm.test(\"É lista\", function(){ pm.expect(Array.isArray(arr)).to.be.true; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Filtrar por idCriterio",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/questoes?idCriterio={{idCriterioFiltro}}&page={{page}}&size={{size}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "questoes"
+              ],
+              "query": [
+                {
+                  "key": "idCriterio",
+                  "value": "{{idCriterioFiltro}}"
+                },
+                {
+                  "key": "page",
+                  "value": "{{page}}"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"200 OK\", function(){ pm.response.to.have.status(200); });",
+                  "const arr = pm.response.json();",
+                  "pm.test(\"É lista\", function(){ pm.expect(Array.isArray(arr)).to.be.true; });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "01 • Create & Read",
+      "item": [
+        {
+          "name": "Criar Questao (201 + Location)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/questoes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "questoes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idCriterio\": {{idCriterioDefault}},\n  \"enunciado\": \"{{enunciadoRand}}\",\n  \"tipo\": \"{{tipoDefault}}\",\n  \"obrigatoriedade\": \"{{obrigDefault}}\",\n  \"validacaoNumMin\": 1,\n  \"validacaoNumMax\": 5,\n  \"tamanhoTextoMax\": null,\n  \"sensivel\": false,\n  \"visivelParaGestor\": true,\n  \"ordemSugerida\": 999\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"201 Created\", function(){ pm.response.to.have.status(201); });",
+                  "pm.test(\"Location presente\", function(){ pm.expect(pm.response.headers.has('Location')).to.be.true; });",
+                  "const loc = pm.response.headers.get('Location');",
+                  "pm.environment.set(\"questaoLocation\", loc);",
+                  "const m = /\\/api\\/v1\\/questoes\\/(\\d+)$/.exec(loc || \"\");",
+                  "pm.test(\"ID extraído\", function(){ pm.expect(m && m[1]).to.be.ok; });",
+                  "if (m && m[1]) pm.environment.set(\"questaoId\", m[1]);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obter por ID (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/questoes/{{questaoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "questoes",
+                "{{questaoId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"200 OK\", function(){ pm.response.to.have.status(200); });",
+                  "const b = pm.response.json();",
+                  "[\"id\",\"idCriterio\",\"enunciado\",\"tipo\",\"obrigatoriedade\",\"ativo\"].forEach(k => pm.expect(b).to.have.property(k));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 • Update (PUT) e GET",
+      "item": [
+        {
+          "name": "Atualizar (PUT 204)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/questoes/{{questaoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "questoes",
+                "{{questaoId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"enunciado\": \"{{enunciadoRand}} (edit)\",\n  \"tipo\": \"{{tipoDefault}}\",\n  \"obrigatoriedade\": \"{{obrigDefault}}\",\n  \"validacaoNumMin\": 1,\n  \"validacaoNumMax\": 5,\n  \"tamanhoTextoMax\": null,\n  \"sensivel\": true,\n  \"visivelParaGestor\": true,\n  \"ativo\": true,\n  \"ordemSugerida\": 1000\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', function(){ pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET após PUT (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/questoes/{{questaoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "questoes",
+                "{{questaoId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "",
+                  "pm.test(\"200 OK\", function(){ pm.response.to.have.status(200); });",
+                  "const b = pm.response.json();",
+                  "[\"id\",\"idCriterio\",\"enunciado\",\"tipo\",\"obrigatoriedade\",\"ativo\"].forEach(k => pm.expect(b).to.have.property(k));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 • Desativar / Ativar",
+      "item": [
+        {
+          "name": "Desativar (DELETE 204)",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/questoes/{{questaoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "questoes",
+                "{{questaoId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', function(){ pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ativar (POST 204)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/questoes/{{questaoId}}/ativar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "questoes",
+                "{{questaoId}}",
+                "ativar"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', function(){ pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 • Negativos & Validações",
+      "item": [
+        {
+          "name": "Criar inválido (sem enunciado) → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/questoes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "questoes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idCriterio\": {{idCriterioDefault}},\n  \"enunciado\": \"\",\n  \"tipo\": \"{{tipoDefault}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 Bad Request', function(){ pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Criar inválido (sem idCriterio) → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/questoes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "questoes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"enunciado\": \"{{enunciadoRand}}\",\n  \"tipo\": \"{{tipoDefault}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 Bad Request', function(){ pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar size=500 (400)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/questoes?page=0&size=500",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "questoes?page=0&size=500"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 Bad Request', function(){ pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET inexistente (404)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/questoes/{{nonExistingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "questoes",
+                "{{nonExistingId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 Not Found', function(){ pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 • Opcional (Cleanup)",
+      "item": [
+        {
+          "name": "Desativar novamente (DELETE 204)",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/questoes/{{questaoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "questoes",
+                "{{questaoId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', function(){ pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

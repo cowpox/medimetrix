@@ -1,6 +1,7 @@
 package com.mmx.medimetrix.web.api.v1.criterio;
 
 import com.mmx.medimetrix.application.criterio.commands.CriterioCreate;
+import com.mmx.medimetrix.application.criterio.commands.CriterioUpdate;
 import com.mmx.medimetrix.application.criterio.queries.CriterioFiltro;
 import com.mmx.medimetrix.application.criterio.service.CriterioService;
 import com.mmx.medimetrix.web.api.v1.criterio.dto.CriterioCreateDTO;
@@ -71,14 +72,14 @@ public class CriterioController {
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void update(@PathVariable Long id, @Valid @RequestBody CriterioUpdateDTO dto) {
-        service.update(
-                id,
+        service.update(id, new CriterioUpdate(
                 dto.nome(),
                 dto.definicaoOperacional(),
                 dto.descricao(),
                 dto.ativo()
-        );
+        ));
     }
+
 
     // DELETE (desativar) -> 204 No Content
     @DeleteMapping("/{id}")

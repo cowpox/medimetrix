@@ -1,6 +1,7 @@
 package com.mmx.medimetrix.web.api.v1.questao;
 
 import com.mmx.medimetrix.application.questao.commands.QuestaoCreate;
+import com.mmx.medimetrix.application.questao.commands.QuestaoUpdate;
 import com.mmx.medimetrix.application.questao.queries.QuestaoFiltro;
 import com.mmx.medimetrix.application.questao.service.QuestaoService;
 import com.mmx.medimetrix.web.api.v1.questao.dto.QuestaoCreateDTO;
@@ -77,10 +78,8 @@ public class QuestaoController {
 
     // PUT -> 204 No Content
     @PutMapping("/{id}")
-    public ResponseEntity<Void> update(@PathVariable Long id,
-                                       @Valid @RequestBody QuestaoUpdateDTO dto) {
-        service.update(
-                id,
+    public ResponseEntity<Void> update(@PathVariable Long id, @Valid @RequestBody QuestaoUpdateDTO dto) {
+        service.update(id, new QuestaoUpdate(
                 dto.enunciado(),
                 dto.tipo(),
                 dto.obrigatoriedade(),
@@ -91,7 +90,7 @@ public class QuestaoController {
                 dto.visivelParaGestor(),
                 dto.ativo(),
                 dto.ordemSugerida()
-        );
+        ));
         return ResponseEntity.noContent().build();
     }
 
