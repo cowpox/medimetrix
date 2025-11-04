@@ -1,0 +1,503 @@
+{
+  "info": {
+    "_postman_id": "0b2d33f2-dc54-4d38-9f8d-6f2b9cd6f002",
+    "name": "MediMetrix • Resposta (v1) — seed‑proof",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Testes E2E da API /api/v1/respostas com cadeias seed‑proof. Ordem: 1) bootstrap → 2) create+read → 3) patch → 4) lists → 5) deletes."
+  },
+  "item": [
+    {
+      "name": "0) Bootstrap (derivar chaves válidas)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Bootstrap: consegue listar ao menos 1 resposta existente\", function () {",
+              "  pm.response.to.have.status(200);",
+              "  const arr = pm.response.json();",
+              "  pm.expect(Array.isArray(arr)).to.be.true;",
+              "  pm.expect(arr.length).to.be.above(0);",
+              "});",
+              "",
+              "const first = pm.response.json()[0];",
+              "pm.environment.set(\"participacaoId\", first.idParticipacao);",
+              "pm.environment.set(\"avaliacaoId\", first.idAvaliacao);",
+              "pm.environment.set(\"questaoId\", first.idQuestao);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/respostas?page=0&size=1",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "respostas"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "0"
+            },
+            {
+              "key": "size",
+              "value": "1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "1) Create /api/v1/respostas (201 + Location)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = {",
+              "  idParticipacao: Number(pm.environment.get(\"participacaoId\")),",
+              "  idAvaliacao: Number(pm.environment.get(\"avaliacaoId\")),",
+              "  idQuestao: Number(pm.environment.get(\"questaoId\")),",
+              "  texto: \"Postman E2E - criado em \" + new Date().toISOString()",
+              "};",
+              "pm.variables.set(\"createBody\", JSON.stringify(body));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"POST: 201 Created com Location\", function () {",
+              "  pm.response.to.have.status(201);",
+              "  pm.expect(pm.response.headers.has(\"Location\")).to.be.true;",
+              "});",
+              "const loc = pm.response.headers.get(\"Location\") || \"\";",
+              "const match = loc.match(/\\/respostas\\/(\\d+)$/);",
+              "pm.test(\"Location contém ID de resposta\", function () {",
+              "  pm.expect(!!match).to.be.true;",
+              "});",
+              "if (match) {",
+              "  pm.environment.set(\"respostaId\", match[1]);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/respostas",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "respostas"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{{createBody}}"
+        }
+      }
+    },
+    {
+      "name": "2) GET by id (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"GET by id: 200 e corpo esperado\", function () {",
+              "  pm.response.to.have.status(200);",
+              "  const r = pm.response.json();",
+              "  pm.expect(r).to.have.property(\"idResposta\");",
+              "  pm.expect(r).to.have.property(\"idParticipacao\");",
+              "  pm.expect(r).to.have.property(\"idAvaliacao\");",
+              "  pm.expect(r).to.have.property(\"idQuestao\");",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/respostas/{{respostaId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "respostas",
+            "{{respostaId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "3) PATCH updateValores (204)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const patch = {",
+              "  texto: \"Postman E2E - atualizado em \" + new Date().toISOString()",
+              "};",
+              "pm.environment.set(\"updateBody\", JSON.stringify(patch));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/respostas/{{respostaId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "respostas",
+            "{{respostaId}}"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{{updateBody}}"
+        }
+      }
+    },
+    {
+      "name": "4) GET by id (200) — conferir atualização",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"GET atualizado: 200\", function(){ pm.response.to.have.status(200); });",
+              "const r = pm.response.json();",
+              "pm.test(\"Texto foi atualizado\", function(){ pm.expect(r.texto || r['texto']).to.include('atualizado'); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/respostas/{{respostaId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "respostas",
+            "{{respostaId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "5) List by participação (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"List: 200 OK e array\", function () {",
+              "  pm.response.to.have.status(200);",
+              "  const arr = pm.response.json();",
+              "  pm.expect(Array.isArray(arr)).to.be.true;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/respostas/participacoes/{{participacaoId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "respostas",
+            "participacoes",
+            "{{participacaoId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "6) List by avaliação (200, paginado)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"List: 200 OK e array\", function () {",
+              "  pm.response.to.have.status(200);",
+              "  const arr = pm.response.json();",
+              "  pm.expect(Array.isArray(arr)).to.be.true;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/respostas?avaliacaoId={{avaliacaoId}}&page=0&size=5",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "respostas"
+          ],
+          "query": [
+            {
+              "key": "avaliacaoId",
+              "value": "{{avaliacaoId}}"
+            },
+            {
+              "key": "page",
+              "value": "0"
+            },
+            {
+              "key": "size",
+              "value": "5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "7) List by questão (200, paginado)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"List: 200 OK e array\", function () {",
+              "  pm.response.to.have.status(200);",
+              "  const arr = pm.response.json();",
+              "  pm.expect(Array.isArray(arr)).to.be.true;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/respostas?questaoId={{questaoId}}&page=0&size=5",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "respostas"
+          ],
+          "query": [
+            {
+              "key": "questaoId",
+              "value": "{{questaoId}}"
+            },
+            {
+              "key": "page",
+              "value": "0"
+            },
+            {
+              "key": "size",
+              "value": "5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "8) List paged geral (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"List: 200 OK e array\", function () {",
+              "  pm.response.to.have.status(200);",
+              "  const arr = pm.response.json();",
+              "  pm.expect(Array.isArray(arr)).to.be.true;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/respostas?page=0&size=3",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "respostas"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "0"
+            },
+            {
+              "key": "size",
+              "value": "3"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "9) DELETE by id (204)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"DELETE: 204 No Content\", function () {",
+              "  pm.response.to.have.status(204);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/respostas/{{respostaId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "respostas",
+            "{{respostaId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "10) GET by id (404) — após delete",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"GET após DELETE: 404 Not Found\", function () {",
+              "  pm.response.to.have.status(404);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/respostas/{{respostaId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "respostas",
+            "{{respostaId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Extra) DELETE por participação (204) — idempotente",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"DELETE: 204 No Content\", function () {",
+              "  pm.response.to.have.status(204);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/respostas/participacoes/{{participacaoId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "respostas",
+            "participacoes",
+            "{{participacaoId}}"
+          ]
+        }
+      }
+    }
+  ]
+}

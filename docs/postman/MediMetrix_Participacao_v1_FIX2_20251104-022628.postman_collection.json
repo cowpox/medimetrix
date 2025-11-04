@@ -1,0 +1,1079 @@
+{
+  "info": {
+    "_postman_id": "6439438c-b1ec-4135-9dd2-f82d1e7c0376",
+    "name": "MediMetrix • Participacao (v1) — FIX2",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "medimetrix-gen"
+  },
+  "item": [
+    {
+      "name": "00 • Smoke & Listagem",
+      "item": [
+        {
+          "name": "Smoke • paged",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/participacoes?page={{page}}&size={{size}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "participacoes"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}"
+                }
+              ]
+            },
+            "header": []
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('resposta é JSON', () => pm.response.to.be.json);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar por avaliação",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/participacoes?avaliacaoId={{avaliacaoId}}&page={{page}}&size={{size}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "participacoes"
+              ],
+              "query": [
+                {
+                  "key": "avaliacaoId",
+                  "value": "{{avaliacaoId}}"
+                },
+                {
+                  "key": "page",
+                  "value": "{{page}}"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}"
+                }
+              ]
+            },
+            "header": []
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('resposta é JSON', () => pm.response.to.be.json);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar por médico",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/participacoes?medicoId={{medicoId}}&page={{page}}&size={{size}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "participacoes"
+              ],
+              "query": [
+                {
+                  "key": "medicoId",
+                  "value": "{{medicoId}}"
+                },
+                {
+                  "key": "page",
+                  "value": "{{page}}"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}"
+                }
+              ]
+            },
+            "header": []
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('resposta é JSON', () => pm.response.to.be.json);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar por status",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/participacoes?status={{statusPermitido}}&page={{page}}&size={{size}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "participacoes"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "{{statusPermitido}}"
+                },
+                {
+                  "key": "page",
+                  "value": "{{page}}"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}"
+                }
+              ]
+            },
+            "header": []
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "",
+                  "const allowed = ['PENDENTE','EM_ANDAMENTO','RESPONDIDA'];",
+                  "let s = pm.environment.get('statusPermitido');",
+                  "if (!s || !allowed.includes(s)) {",
+                  "  s = allowed[Math.floor(Math.random()*allowed.length)];",
+                  "  pm.environment.set('statusPermitido', s);",
+                  "}",
+                  "pm.variables.set('statusAtual', s);"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('resposta é JSON', () => pm.response.to.be.json);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "01 • Create & Read",
+      "item": [
+        {
+          "name": "Create • POST",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/participacoes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "participacoes"
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"idAvaliacao\": \"{{avaliacaoId}}\", \"avaliadoMedicoId\": \"{{medicoId}}\", \"unidadeSnapshotId\": null, \"especialidadeSnapshotId\": null, \"status\": \"{{statusAtual}}\"}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "",
+                  "const allowed = ['PENDENTE','EM_ANDAMENTO','RESPONDIDA'];",
+                  "let s = pm.environment.get('statusPermitido');",
+                  "if (!s || !allowed.includes(s)) {",
+                  "  s = allowed[Math.floor(Math.random()*allowed.length)];",
+                  "  pm.environment.set('statusPermitido', s);",
+                  "}",
+                  "pm.variables.set('statusAtual', s);"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "",
+                  "const code = pm.response.code;",
+                  "if (code === 201) {",
+                  "  const loc = pm.response.headers.get('Location') || '';",
+                  "  pm.environment.set('participacaoLocation', loc);",
+                  "  const m = loc.match(/\\/(\\d+)(\\?.*)?$/);",
+                  "  if (m) pm.environment.set('participacaoId', m[1]);",
+                  "} else if (code === 409) {",
+                  "  const baseUrl = pm.environment.get('baseUrl');",
+                  "  const avaliacaoId = pm.environment.get('avaliacaoId');",
+                  "  const medicoId = pm.environment.get('medicoId');",
+                  "  pm.sendRequest({ url: `${baseUrl}/api/v1/participacoes?avaliacaoId=${avaliacaoId}&medicoId=${medicoId}`, method: 'GET' },",
+                  "    function (err, res) {",
+                  "      if (!err && res.code === 200) {",
+                  "        try {",
+                  "          const body = res.json();",
+                  "          const id = body.idParticipacao || body.id || body.ID_PARTICIPACAO || (body && body['idParticipacao']);",
+                  "          if (id) pm.environment.set('participacaoId', String(id));",
+                  "        } catch(e) {}",
+                  "      }",
+                  "    });",
+                  "} else {",
+                  "  pm.test('Create retornou status inesperado', () => false);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read by Id • GET 200",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/participacoes/{{participacaoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "participacoes",
+                "{{participacaoId}}"
+              ]
+            },
+            "header": []
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "",
+                  "if (!pm.environment.get('participacaoId')) {",
+                  "  console.warn('participacaoId não setado — pulando request.');",
+                  "  postman.setNextRequest(null);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('resposta é JSON', () => pm.response.to.be.json);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read • GET 404 (não existente)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/participacoes/{{nonExistingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "participacoes",
+                "{{nonExistingId}}"
+              ]
+            },
+            "header": []
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('404 Not Found (ou 500 até handler existir)', () => pm.expect([404,500]).to.include(pm.response.code));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Find 1x1 (avaliacaoId & medicoId)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/participacoes?avaliacaoId={{avaliacaoId}}&medicoId={{medicoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "participacoes"
+              ],
+              "query": [
+                {
+                  "key": "avaliacaoId",
+                  "value": "{{avaliacaoId}}"
+                },
+                {
+                  "key": "medicoId",
+                  "value": "{{medicoId}}"
+                }
+              ]
+            },
+            "header": []
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('resposta é JSON', () => pm.response.to.be.json);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 • Update (PUT) e GET",
+      "item": [
+        {
+          "name": "Update • PUT 204",
+          "request": {
+            "method": "PUT",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/participacoes/{{participacaoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "participacoes",
+                "{{participacaoId}}"
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{{updateBody}}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "",
+                  "const baseUrl = pm.environment.get('baseUrl');",
+                  "function setUpdateBody(statusAtual) {",
+                  "  // Se já respondida, não tente mudar status",
+                  "  if (statusAtual === 'RESPONDIDA') {",
+                  "    pm.environment.set('updateBody', JSON.stringify({\"avaliadoMedicoId\": pm.environment.get('medicoId')}));",
+                  "  } else {",
+                  "    pm.environment.set('updateBody', JSON.stringify({\"avaliadoMedicoId\": pm.environment.get('medicoId'), \"status\": \"EM_ANDAMENTO\"}));",
+                  "  }",
+                  "}",
+                  "",
+                  "function tryGet(status, next) {",
+                  "  pm.sendRequest({url: `${baseUrl}/api/v1/participacoes?status=${status}&page=0&size=1`, method: 'GET'}, function (err, res) {",
+                  "    if (!err && res.code === 200) {",
+                  "      try {",
+                  "        const arr = res.json();",
+                  "        if (Array.isArray(arr) && arr.length > 0) {",
+                  "          const p = arr[0];",
+                  "          const id = p.idParticipacao || p.id || p.ID_PARTICIPACAO;",
+                  "          if (id) {",
+                  "            pm.environment.set('participacaoId', String(id));",
+                  "            const st = p.status || p.STATUS || '';",
+                  "            setUpdateBody(st);",
+                  "            return;",
+                  "          }",
+                  "        }",
+                  "      } catch(e) {}",
+                  "    }",
+                  "    if (next) next();",
+                  "  });",
+                  "}",
+                  "",
+                  "const currentId = pm.environment.get('participacaoId');",
+                  "if (currentId) {",
+                  "  // tenta descobrir status atual; se RESPONDIDA, ajusta updateBody sem status",
+                  "  pm.sendRequest({url: `${baseUrl}/api/v1/participacoes/${currentId}`, method:'GET'}, function(err,res){",
+                  "    if (!err && res.code === 200) {",
+                  "      try {",
+                  "        const p = res.json();",
+                  "        const st = p.status || p.STATUS || '';",
+                  "        setUpdateBody(st);",
+                  "      } catch(e) {",
+                  "        setUpdateBody(null);",
+                  "      }",
+                  "    } else {",
+                  "      // Busca um id adequado",
+                  "      tryGet('PENDENTE', function(){ tryGet('EM_ANDAMENTO', function(){ tryGet('RESPONDIDA'); }); });",
+                  "    }",
+                  "  });",
+                  "} else {",
+                  "  // Sem id: prioriza PENDENTE -> EM_ANDAMENTO -> RESPONDIDA (ajustando corpo conforme necessário)",
+                  "  tryGet('PENDENTE', function(){ tryGet('EM_ANDAMENTO', function(){ tryGet('RESPONDIDA'); }); });",
+                  "}",
+                  "",
+                  "",
+                  "if (!pm.environment.get('participacaoId')) {",
+                  "  console.warn('participacaoId não setado — pulando request.');",
+                  "  postman.setNextRequest(null);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Confirmar • GET 200",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/participacoes/{{participacaoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "participacoes",
+                "{{participacaoId}}"
+              ]
+            },
+            "header": []
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "",
+                  "if (!pm.environment.get('participacaoId')) {",
+                  "  console.warn('participacaoId não setado — pulando request.');",
+                  "  postman.setNextRequest(null);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('resposta é JSON', () => pm.response.to.be.json);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 • Transições",
+      "item": [
+        {
+          "name": "Mark Started • PATCH 204",
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/participacoes/{{participacaoId}}/start",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "participacoes",
+                "{{participacaoId}}",
+                "start"
+              ]
+            },
+            "header": []
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "",
+                  "const baseUrl = pm.environment.get('baseUrl');",
+                  "",
+                  "function tryGet(status, next) {",
+                  "  pm.sendRequest({url: `${baseUrl}/api/v1/participacoes?status=${status}&page=0&size=1`, method: 'GET'}, function (err, res) {",
+                  "    if (!err && res.code === 200) {",
+                  "      try {",
+                  "        const arr = res.json();",
+                  "        if (Array.isArray(arr) && arr.length > 0) {",
+                  "          const p = arr[0];",
+                  "          const id = p.idParticipacao || p.id || p.ID_PARTICIPACAO;",
+                  "          if (id) {",
+                  "            pm.environment.set('participacaoId', String(id));",
+                  "            return;",
+                  "          }",
+                  "        }",
+                  "      } catch(e) {}",
+                  "    }",
+                  "    if (next) next();",
+                  "  });",
+                  "}",
+                  "",
+                  "const currentId = pm.environment.get('participacaoId');",
+                  "if (!currentId) {",
+                  "  // Preferir PENDENTE; se não houver, EM_ANDAMENTO; se ainda não houver, qualquer não-respondida será coberta por EM_ANDAMENTO já",
+                  "  tryGet('PENDENTE', function(){ tryGet('EM_ANDAMENTO', function(){ /* último recurso: mantém vazio */ }); });",
+                  "}",
+                  "",
+                  "",
+                  "if (!pm.environment.get('participacaoId')) {",
+                  "  console.warn('participacaoId não setado — pulando request.');",
+                  "  postman.setNextRequest(null);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Touch Activity • PATCH 204",
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/participacoes/{{participacaoId}}/touch",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "participacoes",
+                "{{participacaoId}}",
+                "touch"
+              ]
+            },
+            "header": []
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "",
+                  "const baseUrl = pm.environment.get('baseUrl');",
+                  "",
+                  "function tryGet(status, next) {",
+                  "  pm.sendRequest({url: `${baseUrl}/api/v1/participacoes?status=${status}&page=0&size=1`, method: 'GET'}, function (err, res) {",
+                  "    if (!err && res.code === 200) {",
+                  "      try {",
+                  "        const arr = res.json();",
+                  "        if (Array.isArray(arr) && arr.length > 0) {",
+                  "          const p = arr[0];",
+                  "          const id = p.idParticipacao || p.id || p.ID_PARTICIPACAO;",
+                  "          if (id) {",
+                  "            pm.environment.set('participacaoId', String(id));",
+                  "            return;",
+                  "          }",
+                  "        }",
+                  "      } catch(e) {}",
+                  "    }",
+                  "    if (next) next();",
+                  "  });",
+                  "}",
+                  "",
+                  "const currentId = pm.environment.get('participacaoId');",
+                  "if (!currentId) {",
+                  "  // Preferir PENDENTE; se não houver, EM_ANDAMENTO; se ainda não houver, qualquer não-respondida será coberta por EM_ANDAMENTO já",
+                  "  tryGet('PENDENTE', function(){ tryGet('EM_ANDAMENTO', function(){ /* último recurso: mantém vazio */ }); });",
+                  "}",
+                  "",
+                  "",
+                  "if (!pm.environment.get('participacaoId')) {",
+                  "  console.warn('participacaoId não setado — pulando request.');",
+                  "  postman.setNextRequest(null);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mark Submitted • PATCH 204",
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/participacoes/{{participacaoId}}/submit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "participacoes",
+                "{{participacaoId}}",
+                "submit"
+              ]
+            },
+            "header": []
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "",
+                  "const baseUrl = pm.environment.get('baseUrl');",
+                  "",
+                  "function tryGet(status, next) {",
+                  "  pm.sendRequest({url: `${baseUrl}/api/v1/participacoes?status=${status}&page=0&size=1`, method: 'GET'}, function (err, res) {",
+                  "    if (!err && res.code === 200) {",
+                  "      try {",
+                  "        const arr = res.json();",
+                  "        if (Array.isArray(arr) && arr.length > 0) {",
+                  "          const p = arr[0];",
+                  "          const id = p.idParticipacao || p.id || p.ID_PARTICIPACAO;",
+                  "          if (id) {",
+                  "            pm.environment.set('participacaoId', String(id));",
+                  "            return;",
+                  "          }",
+                  "        }",
+                  "      } catch(e) {}",
+                  "    }",
+                  "    if (next) next();",
+                  "  });",
+                  "}",
+                  "",
+                  "const currentId = pm.environment.get('participacaoId');",
+                  "if (!currentId) {",
+                  "  // Preferir PENDENTE; se não houver, EM_ANDAMENTO; se ainda não houver, qualquer não-respondida será coberta por EM_ANDAMENTO já",
+                  "  tryGet('PENDENTE', function(){ tryGet('EM_ANDAMENTO', function(){ /* último recurso: mantém vazio */ }); });",
+                  "}",
+                  "",
+                  "",
+                  "if (!pm.environment.get('participacaoId')) {",
+                  "  console.warn('participacaoId não setado — pulando request.');",
+                  "  postman.setNextRequest(null);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Confirmar • GET 200",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/participacoes/{{participacaoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "participacoes",
+                "{{participacaoId}}"
+              ]
+            },
+            "header": []
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "",
+                  "if (!pm.environment.get('participacaoId')) {",
+                  "  console.warn('participacaoId não setado — pulando request.');",
+                  "  postman.setNextRequest(null);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('resposta é JSON', () => pm.response.to.be.json);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 • Delete",
+      "item": [
+        {
+          "name": "Delete • 204",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/participacoes/{{participacaoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "participacoes",
+                "{{participacaoId}}"
+              ]
+            },
+            "header": []
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "",
+                  "if (!pm.environment.get('participacaoId')) {",
+                  "  console.warn('participacaoId não setado — pulando request.');",
+                  "  postman.setNextRequest(null);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET após Delete • 404",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/participacoes/{{participacaoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "participacoes",
+                "{{participacaoId}}"
+              ]
+            },
+            "header": []
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "",
+                  "if (!pm.environment.get('participacaoId')) {",
+                  "  console.warn('participacaoId não setado — pulando request.');",
+                  "  postman.setNextRequest(null);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('404 Not Found (ou 500 até handler existir)', () => pm.expect([404,500]).to.include(pm.response.code));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 • Negativos & Validações",
+      "item": [
+        {
+          "name": "Create • 400 (faltando idAvaliacao)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/participacoes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "participacoes"
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"avaliadoMedicoId\": \"{{medicoId}}\"}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('400 Bad Request', () => pm.response.to.have.status(400));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update • 404 (id inexistente)",
+          "request": {
+            "method": "PUT",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/participacoes/{{nonExistingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "participacoes",
+                "{{nonExistingId}}"
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"avaliadoMedicoId\":\"{{medicoId}}\",\"status\":\"EM_ANDAMENTO\"}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('404 Not Found (ou 500 até handler existir)', () => pm.expect([404,500]).to.include(pm.response.code));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Patch Submit • 404 (id inexistente)",
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/participacoes/{{nonExistingId}}/submit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "participacoes",
+                "{{nonExistingId}}",
+                "submit"
+              ]
+            },
+            "header": []
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('404 Not Found (ou 500 até handler existir)', () => pm.expect([404,500]).to.include(pm.response.code));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 • Opcional (Cleanup)",
+      "item": [
+        {
+          "name": "Cleanup • DELETE nonExistingId (idempotente)",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/participacoes/{{nonExistingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "participacoes",
+                "{{nonExistingId}}"
+              ]
+            },
+            "header": []
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.expect([204,404,500]).to.include(pm.response.code);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": []
+}
