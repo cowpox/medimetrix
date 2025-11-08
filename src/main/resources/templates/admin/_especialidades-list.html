@@ -1,0 +1,24 @@
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h5 mb-0">Especialidades</h2>
+        <a class="btn btn-success" th:href="@{/app/admin/especialidades/novo}">Novo</a>
+    </div>
+
+    <div class="input-group input-group-sm mb-2" style="max-width:320px;">
+        <input type="search" class="form-control" placeholder="Buscar...">
+        <button class="btn btn-outline-secondary">OK</button>
+    </div>
+
+    <table class="table table-striped align-middle">
+        <thead><tr><th>Nome</th><th>Código</th><th class="text-end">Ações</th></tr></thead>
+        <tbody>
+        <tr>
+            <td>Clínica Médica</td><td>CM</td>
+            <td class="text-end">
+                <a class="btn btn-sm btn-outline-primary" th:href="@{/app/admin/especialidades/1/editar}">Editar</a>
+                <button class="btn btn-sm btn-outline-danger">Excluir</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>

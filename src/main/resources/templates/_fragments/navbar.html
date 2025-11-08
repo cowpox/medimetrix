@@ -1,0 +1,24 @@
+<nav th:fragment="navbar (role)"
+     class="topbar navbar sticky-top shadow-sm"
+     th:classappend="${role}">
+    <div class="container-fluid">
+        <div class="d-flex align-items-center gap-2">
+            <span class="fw-bold">MediMetrix</span>
+<!--            <span class="badge text-bg-secondary">SSR · Thymeleaf</span>-->
+        </div>
+
+        <ol class="breadcrumb mb-0 small">
+            <li class="breadcrumb-item"><a th:href="@{/app}">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page"
+                th:text="${breadcrumb} ?: 'Área'">Área</li>
+        </ol>
+
+        <div class="d-flex align-items-center gap-2">
+            <span class="small text-white">Usuário: <strong>demo@mmx</strong></span>
+            <span class="badge role-pill"
+                  th:classappend="${role} ?: 'gestor'"
+                  th:text="${(role != null ? #strings.toUpperCase(role) : 'GESTOR')}">GESTOR</span>
+            <a class="btn btn-sm btn-outline-secondary" th:href="@{/app/login}">Sair</a>
+        </div>
+    </div>
+</nav>

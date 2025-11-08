@@ -1,0 +1,8 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR"
+      th:replace="~{_layouts/default :: layout(
+          pageTitle='Questão',
+          breadcrumb='Catálogo',
+          conteudo=~{gestor/_catalogo-questoes-form :: content}
+      )}">
+</html>

@@ -1,0 +1,8 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR"
+      th:replace="~{_layouts/default :: layout(
+          pageTitle='Avaliação • Passo 2',
+          breadcrumb='Avaliação',
+          conteudo=~{gestor/avaliacao-wizard/_passo2-questoes :: content}
+      )}">
+</html>

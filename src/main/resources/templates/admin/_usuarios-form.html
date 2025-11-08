@@ -1,0 +1,25 @@
+<div th:fragment="content">
+    <h2 class="h5 mb-3">Usuário</h2>
+    <form th:action="@{/app/admin/usuarios}" method="post" class="vstack gap-3">
+        <div>
+            <label class="form-label">Nome</label>
+            <input class="form-control" name="nome" required>
+        </div>
+        <div>
+            <label class="form-label">E-mail</label>
+            <input type="email" class="form-control" name="email" required>
+        </div>
+        <div>
+            <label class="form-label">Papel</label>
+            <select class="form-select" name="papel">
+                <option>ADMIN</option>
+                <option>GESTOR</option>
+                <option>MEDICO</option>
+            </select>
+        </div>
+        <div class="d-flex gap-2 mt-3">
+            <button class="btn btn-primary" type="submit">Salvar</button>
+            <a class="btn btn-outline-secondary" th:href="@{/app/admin/usuarios}">Cancelar</a>
+        </div>
+    </form>
+</div>

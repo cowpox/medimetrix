@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR"
+      th:fragment="layout (pageTitle, breadcrumb, conteudo)">
+
+<head th:replace="_fragments/head :: head"></head>
+
+<body class="bg-body-tertiary">
+<!-- 'role' já vem do RoleAdvice -->
+<header th:replace="~{_fragments/navbar :: navbar(role=${role})}"></header>
+
+<div class="d-flex" style="min-height: calc(100vh - 56px);">
+    <aside th:replace="_fragments/sidebar :: sidebar"></aside>
+
+    <main class="flex-grow-1">
+        <section th:replace="_fragments/alerts :: alerts"></section>
+
+        <div class="container py-4">
+            <div class="d-flex align-items-center justify-content-between">
+                <h1 class="h4" th:text="${pageTitle} ?: 'Página'">Página</h1>
+                <div th:if="${breadcrumb}">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item"><a th:href="@{/app}">Home</a></li>
+                            <li class="breadcrumb-item active" aria-current="page" th:text="${breadcrumb}">Seção</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+
+            <hr/>
+            <div th:insert="${conteudo}">Conteúdo</div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

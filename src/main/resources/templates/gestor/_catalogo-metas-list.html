@@ -1,0 +1,45 @@
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h5 mb-0">Catálogo • Metas</h2>
+        <a class="btn btn-success" th:href="@{/app/catalogo/metas/novo}">Novo</a>
+    </div>
+
+    <div class="row g-2 align-items-center mb-2">
+        <div class="col-auto"><label class="col-form-label">Critério:</label></div>
+        <div class="col-auto">
+            <select class="form-select form-select-sm">
+                <option>Todas</option>
+                <option>Acolhimento</option>
+                <option>Segurança</option>
+            </select>
+        </div>
+        <div class="col ms-auto" style="max-width: 300px;">
+            <div class="input-group input-group-sm">
+                <input type="search" class="form-control" placeholder="Buscar...">
+                <button class="btn btn-outline-secondary">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <table class="table table-striped align-middle">
+        <thead>
+        <tr>
+            <th>Meta</th>
+            <th>Critério</th>
+            <th>Valor Alvo</th>
+            <th class="text-end">Ações</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>Média ≥ 4.0 no período</td>
+            <td>Acolhimento</td>
+            <td>4.0</td>
+            <td class="text-end">
+                <a class="btn btn-sm btn-outline-primary" th:href="@{/app/catalogo/metas/1/editar}">Editar</a>
+                <button class="btn btn-sm btn-outline-danger">Excluir</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,13 @@
+<nav aria-label="Paginação" th:if="${pageCount}">
+  <ul class="pagination pagination-sm">
+    <li class="page-item" th:classappend="${page==0} ? 'disabled'">
+      <a class="page-link" th:href="@{${baseUrl}(page=${page-1},size=${size})}">Anterior</a>
+    </li>
+    <li class="page-item disabled">
+      <span class="page-link" th:text="'Página ' + ${page+1} + ' de ' + ${pageCount}">Página 1 de 1</span>
+    </li>
+    <li class="page-item" th:classappend="${page+1>=pageCount} ? 'disabled'">
+      <a class="page-link" th:href="@{${baseUrl}(page=${page+1},size=${size})}">Próxima</a>
+    </li>
+  </ul>
+</nav>

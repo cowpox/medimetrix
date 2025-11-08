@@ -1,0 +1,29 @@
+<div th:fragment="content">
+    <h2 class="h5 mb-3">Questão</h2>
+    <form th:action="@{/app/catalogo/questoes}" method="post" class="vstack gap-3">
+        <div>
+            <label class="form-label">Enunciado</label>
+            <textarea class="form-control" name="texto" rows="2" required></textarea>
+        </div>
+        <div>
+            <label class="form-label">Critério</label>
+            <select class="form-select" name="criterio">
+                <option>Acolhimento</option>
+                <option>Segurança</option>
+                <option>Comunicação</option>
+            </select>
+        </div>
+        <div>
+            <label class="form-label">Tipo</label>
+            <select class="form-select" name="tipo">
+                <option>Numérico</option>
+                <option>Binário</option>
+                <option>Texto</option>
+            </select>
+        </div>
+        <div class="d-flex gap-2 mt-3">
+            <button class="btn btn-primary" type="submit">Salvar</button>
+            <a class="btn btn-outline-secondary" th:href="@{/app/catalogo/questoes}">Cancelar</a>
+        </div>
+    </form>
+</div>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="_fragments/head :: *"></head>
+<body class="bg-light d-flex align-items-center" style="min-height: 100vh;">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-4">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title text-center mb-4">Entrar</h5>
+            <form th:action="@{/app/login}" method="post">
+              <div class="mb-3">
+                <label class="form-label">Usuário</label>
+                <input type="text" name="username" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Senha</label>
+                <input type="password" name="password" class="form-control" required>
+              </div>
+              <div class="d-grid">
+                <button class="btn btn-primary" type="submit">Entrar</button>
+              </div>
+            </form>
+            <p class="text-center text-muted small mt-3">MediMetrix • SSR demo</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

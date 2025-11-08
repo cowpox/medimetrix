@@ -1,0 +1,22 @@
+<div th:fragment="content">
+    <h2 class="h5 mb-3">Responder avaliação</h2>
+    <form th:action="@{/app/coleta/1/responder}" method="post" class="vstack gap-3">
+        <div>
+            <label class="form-label">1) O médico explica o diagnóstico de forma clara?</label>
+            <select class="form-select" name="q1">
+                <option>1 - Discordo totalmente</option>
+                <option>2</option><option>3</option><option>4</option>
+                <option selected>5 - Concordo totalmente</option>
+            </select>
+        </div>
+        <div>
+            <label class="form-label">2) Comentários</label>
+            <textarea class="form-control" rows="3" name="q2"></textarea>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary" name="acao" value="salvar" type="submit">Salvar rascunho</button>
+            <button class="btn btn-primary" name="acao" value="enviar" formaction="/app/coleta/1/enviar" formmethod="post">Enviar</button>
+            <a class="btn btn-outline-secondary" th:href="@{/app/coleta/1}">Voltar</a>
+        </div>
+    </form>
+</div>

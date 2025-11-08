@@ -1,0 +1,20 @@
+<div th:fragment="content">
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="card"><div class="card-body">
+        <h6 class="card-subtitle mb-2 text-muted">Avisos</h6>
+        <p class="mb-0">Nenhum aviso novo.</p>
+      </div></div>
+    </div>
+    <div class="col-md-4">
+      <div class="card"><div class="card-body">
+        <h6 class="card-subtitle mb-2 text-muted">Atalhos</h6>
+        <ul class="mb-0">
+          <li><a th:href="@{/app/coleta}">Minhas Avaliações</a></li>
+          <li><a th:href="@{/app/avaliacoes}">Avaliações</a></li>
+          <li><a th:href="@{/app/catalogo/criterios}">Catálogo</a></li>
+        </ul>
+      </div></div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,17 @@
+<div th:fragment="content">
+    <h2 class="h5 mb-3">Especialidade</h2>
+    <form th:action="@{/app/admin/especialidades}" method="post" class="vstack gap-3">
+        <div>
+            <label class="form-label">Nome</label>
+            <input class="form-control" name="nome" required>
+        </div>
+        <div>
+            <label class="form-label">Código</label>
+            <input class="form-control" name="codigo">
+        </div>
+        <div class="d-flex gap-2 mt-3">
+            <button class="btn btn-primary" type="submit">Salvar</button>
+            <a class="btn btn-outline-secondary" th:href="@{/app/admin/especialidades}">Cancelar</a>
+        </div>
+    </form>
+</div>

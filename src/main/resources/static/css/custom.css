@@ -1,0 +1,87 @@
+:root { --mmx-sidebar-width: 260px; }
+@media (min-width: 992px){
+  aside[th\:replace="_fragments/sidebar :: *"] { width: var(--mmx-sidebar-width); }
+}
+.badge-status-draft { background: #6c757d; }
+.badge-status-published { background: #0d6efd; }
+.badge-status-closed { background: #adb5bd; }
+
+
+/* ===== Cores das seções do sidebar ===== */
+.bg-medico {
+    background-color: #007b83;   /* azul petróleo */
+}
+.bg-gestor {
+    background-color: #34568B;   /* azul profundo */
+}
+.bg-admin {
+    background-color: #7B1FA2;   /* roxo uva */
+}
+
+/* texto das seções */
+.bg-medico, .bg-gestor, .bg-admin {
+    color: #fff;
+    letter-spacing: .5px;
+}
+
+/* Médicos – base #007b83 */
+.link-medico { background: #e6f4f4; border-left: 3px solid transparent; }
+.link-medico:hover { background: #d9efef; color: #004f54; }
+.link-medico.active { background: #cde9e9; border-left-color: #007b83; color: #004f54; }
+
+/* Gestor – base #34568B */
+.link-gestor { background: #eaf0f9; border-left: 3px solid transparent; }
+.link-gestor:hover { background: #dde6f5; color: #1e335a; }
+.link-gestor.active { background: #d2ddf0; border-left-color: #34568B; color: #1e335a; }
+
+/* Admin – base #7B1FA2 */
+.link-admin { background: #f3e9f7; border-left: 3px solid transparent; }
+.link-admin:hover { background: #ecdff3; color: #4a1161; }
+.link-admin.active { background: #e3d2ec; border-left-color: #7B1FA2; color: #4a1161; }
+
+
+
+
+/* Fundo da topbar por papel */
+.topbar.medico { background:#007b83; }
+.topbar.gestor { background:#34568B; }
+.topbar.admin  { background:#7B1FA2; }
+
+/* Texto e links ficam claros sobre fundo escuro */
+.topbar.medico, .topbar.gestor, .topbar.admin {
+    color:#fff;
+}
+.topbar .breadcrumb .breadcrumb-item,
+.topbar .breadcrumb .breadcrumb-item a {
+    color: rgba(255,255,255,.9);
+    text-decoration: none;
+}
+.topbar .breadcrumb .breadcrumb-item + .breadcrumb-item::before {
+    color: rgba(255,255,255,.6);
+}
+.topbar a, .topbar .navbar-brand { color:#fff; }
+
+/* Pill do papel (direita) com vidro claro */
+.topbar .role-pill {
+    background: rgba(255,255,255,.2);
+    color:#fff;
+    border:1px solid rgba(255,255,255,.35);
+}
+
+/* Botão Sair com contraste no topo colorido */
+.topbar .btn-outline-secondary {
+    color:#fff;
+    border-color: rgba(255,255,255,.6);
+}
+.topbar .btn-outline-secondary:hover {
+    background: rgba(255,255,255,.18);
+    border-color:#fff;
+}
+
+/* Campo de busca na topbar, se houver no futuro */
+.topbar .form-control {
+    background: rgba(255,255,255,.12);
+    color:#fff;
+    border-color: rgba(255,255,255,.35);
+}
+.topbar .form-control::placeholder { color: rgba(255,255,255,.85); }

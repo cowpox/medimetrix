@@ -1,0 +1,14 @@
+<div th:fragment="alerts"
+     th:if="${flash_success} != null or ${flash_error} != null"
+     class="container mt-3">
+
+    <div th:if="${flash_success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${flash_success}">Ação realizada com sucesso.</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div th:if="${flash_error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${flash_error}">Ocorreu um erro.</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+</div>

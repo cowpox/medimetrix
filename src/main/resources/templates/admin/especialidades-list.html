@@ -1,0 +1,8 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR"
+      th:replace="~{_layouts/default :: layout(
+          pageTitle='Especialidades',
+          breadcrumb='Admin',
+          conteudo=~{admin/_especialidades-list :: content}
+      )}">
+</html>

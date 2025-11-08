@@ -1,0 +1,24 @@
+<div th:fragment="content">
+    <h2 class="h5 mb-3">Meta</h2>
+    <form th:action="@{/app/catalogo/metas}" method="post" class="vstack gap-3">
+        <div>
+            <label class="form-label">Critério</label>
+            <select class="form-select" name="criterio">
+                <option>Acolhimento</option>
+                <option>Segurança</option>
+            </select>
+        </div>
+        <div>
+            <label class="form-label">Descrição</label>
+            <input class="form-control" name="descricao" placeholder="Ex.: Média ≥ 4.0" required>
+        </div>
+        <div>
+            <label class="form-label">Valor Alvo</label>
+            <input type="number" step="0.1" class="form-control" name="valor" placeholder="4.0">
+        </div>
+        <div class="d-flex gap-2 mt-3">
+            <button class="btn btn-primary" type="submit">Salvar</button>
+            <a class="btn btn-outline-secondary" th:href="@{/app/catalogo/metas}">Cancelar</a>
+        </div>
+    </form>
+</div>

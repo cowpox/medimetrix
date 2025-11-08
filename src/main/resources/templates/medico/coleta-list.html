@@ -1,0 +1,8 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR"
+      th:replace="~{_layouts/default :: layout(
+          pageTitle='Minhas Avaliações',
+          breadcrumb='Coleta',
+          conteudo=~{medico/_coleta-list :: content}
+      )}">
+</html>

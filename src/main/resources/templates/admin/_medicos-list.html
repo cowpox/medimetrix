@@ -1,0 +1,31 @@
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h5 mb-0">Médicos</h2>
+        <a class="btn btn-success" th:href="@{/app/admin/medicos/novo}">Novo</a>
+    </div>
+
+    <div class="row g-2 align-items-center mb-2">
+        <div class="col-auto"><label class="col-form-label">CRM:</label></div>
+        <div class="col-auto"><input class="form-control form-control-sm" placeholder="Número"></div>
+        <div class="col-auto"><input class="form-control form-control-sm" placeholder="UF"></div>
+        <div class="col ms-auto" style="max-width:320px;">
+            <div class="input-group input-group-sm">
+                <input type="search" class="form-control" placeholder="Nome ou e-mail">
+                <button class="btn btn-outline-secondary">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <table class="table table-hover align-middle">
+        <thead><tr><th>Nome</th><th>CRM</th><th>Especialidade</th><th class="text-end">Ações</th></tr></thead>
+        <tbody>
+        <tr>
+            <td>Dr. João Silva</td><td>12345 / PR</td><td>Clínica Médica</td>
+            <td class="text-end">
+                <a class="btn btn-sm btn-outline-primary" th:href="@{/app/admin/medicos/1/editar}">Editar</a>
+                <button class="btn btn-sm btn-outline-danger">Excluir</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
