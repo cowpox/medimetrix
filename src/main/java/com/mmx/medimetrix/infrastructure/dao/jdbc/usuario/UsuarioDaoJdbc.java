@@ -111,6 +111,18 @@ public class UsuarioDaoJdbc implements UsuarioDao {
     }
 
     @Override
+    public List<Usuario> listByPapelAtivo(Papel papel, boolean ativo) {
+        final String sql = """
+        SELECT ID_USUARIO, NOME, EMAIL, PAPEL, ATIVO, DATA_CRIACAO, DATA_ULTIMA_EDICAO
+          FROM MEDIMETRIX.USUARIO
+         WHERE PAPEL = ? AND ATIVO = ?
+         ORDER BY NOME
+        """;
+        return jdbc.query(sql, MAPPER, papel.name(), ativo);
+    }
+
+
+    @Override
     public int deactivate(Long id) {
         final String sql = "UPDATE MEDIMETRIX.USUARIO SET ATIVO = FALSE, DATA_ULTIMA_EDICAO = CURRENT_TIMESTAMP WHERE ID_USUARIO = ?";
         return jdbc.update(sql, id);

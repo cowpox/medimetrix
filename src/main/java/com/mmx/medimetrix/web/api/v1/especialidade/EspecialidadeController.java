@@ -62,7 +62,7 @@ public class EspecialidadeController {
             @RequestParam(defaultValue = "nome") String sortBy,
             @RequestParam(defaultValue = "true") Boolean asc
     ) {
-        var filtro = new EspecialidadeFiltro(nome, page, size, sortBy, asc);
+        var filtro = new EspecialidadeFiltro(nome, page, size, sortBy, asc, null);
         List<EspecialidadeResponseDTO> resp = service.list(filtro)
                 .stream()
                 .map(EspecialidadeMapper::toResponse)

@@ -63,11 +63,26 @@ public class EspecialidadeServiceImpl implements EspecialidadeService {
         int limit  = size;
 
         String nomeLike = (filtro == null) ? null : filtro.nomeLike();
-        if (StringUtils.hasText(nomeLike)) {
-            return dao.searchByNomeLikePaged(nomeLike.trim(), offset, limit);
+        Boolean ativo   = (filtro == null) ? null : filtro.ativo();
+
+        // ordenação
+        String sortBy = (filtro == null || filtro.sortBy() == null) ? "nome" : filtro.sortBy().toLowerCase();
+        boolean asc   = (filtro == null || filtro.asc() == null) ? true : filtro.asc();
+
+        boolean hasNome = org.springframework.util.StringUtils.hasText(nomeLike);
+        if (hasNome && ativo != null) {
+            return dao.searchByNomeAndAtivoLikePagedOrdered(nomeLike.trim(), ativo, sortBy, asc, offset, limit);
         }
-        return dao.listPaged(offset, limit);
+        if (hasNome) {
+            return dao.searchByNomeLikePagedOrdered(nomeLike.trim(), sortBy, asc, offset, limit);
+        }
+        if (ativo != null) {
+            return dao.listByAtivoPagedOrdered(ativo, sortBy, asc, offset, limit);
+        }
+        return dao.listPagedOrdered(sortBy, asc, offset, limit);
     }
+
+
 
     // Conveniências
     public List<Especialidade> listAtivas() {

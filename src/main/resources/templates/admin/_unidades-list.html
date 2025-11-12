@@ -4,6 +4,10 @@
         <a class="btn btn-success" th:href="@{/app/admin/unidades/novo}">Novo</a>
     </div>
 
+    <!-- Mensagens de feedback (opcional) -->
+    <div th:if="${flashSuccess}" class="alert alert-success" th:text="${flashSuccess}"></div>
+    <div th:if="${flashError}" class="alert alert-danger" th:text="${flashError}"></div>
+
     <!-- Filtros -->
     <form class="row g-2 mb-3" method="get" th:action="@{/app/admin/unidades}">
         <div class="col-md-3">
@@ -27,9 +31,30 @@
     <table class="table table-striped align-middle">
         <thead>
         <tr>
-            <th>ID</th>
-            <th>Nome</th>
-            <th>Gestor</th>
+            <th>
+                ID
+                <a class="sort" th:classappend="${sort}=='ID' and ${asc} ? ' active' : ''"
+                   th:href="@{/app/admin/unidades(sort='ID',asc=true, page=0, termo=${termo}, ativo=${ativo})}">▲</a>
+                <a class="sort" th:classappend="${sort}=='ID' and !${asc} ? ' active' : ''"
+                   th:href="@{/app/admin/unidades(sort='ID',asc=false,page=0, termo=${termo}, ativo=${ativo})}">▼</a>
+            </th>
+
+            <th>
+                Nome
+                <a class="sort" th:classappend="${sort}=='NOME' and ${asc} ? ' active' : ''"
+                   th:href="@{/app/admin/unidades(sort='NOME',asc=true, page=0, termo=${termo}, ativo=${ativo})}">▲</a>
+                <a class="sort" th:classappend="${sort}=='NOME' and !${asc} ? ' active' : ''"
+                   th:href="@{/app/admin/unidades(sort='NOME',asc=false,page=0, termo=${termo}, ativo=${ativo})}">▼</a>
+            </th>
+
+            <th>
+                Gestor
+                <a class="sort" th:classappend="${sort}=='GESTOR' and ${asc} ? ' active' : ''"
+                   th:href="@{/app/admin/unidades(sort='GESTOR',asc=true, page=0, termo=${termo}, ativo=${ativo})}">▲</a>
+                <a class="sort" th:classappend="${sort}=='GESTOR' and !${asc} ? ' active' : ''"
+                   th:href="@{/app/admin/unidades(sort='GESTOR',asc=false,page=0, termo=${termo}, ativo=${ativo})}">▼</a>
+            </th>
+
             <th>Status</th>
             <th class="text-end">Ações</th>
         </tr>
@@ -38,7 +63,7 @@
         <tr th:each="u : ${itens}">
             <td th:text="${u.id}">1</td>
             <td th:text="${u.nome}">PA Centro</td>
-            <td th:text="${u.gestorNome}">Alice Carvalho</td>
+            <td th:text="${u.gestorNome}">—</td>
             <td><span th:text="${u.ativo} ? 'Ativa' : 'Inativa'">Ativa</span></td>
             <td class="text-end">
                 <a class="btn btn-sm btn-outline-primary"
@@ -46,22 +71,17 @@
 
                 <form th:if="${u.ativo}" class="d-inline" method="post"
                       th:action="@{|/app/admin/unidades/${u.id}/desativar|}">
+                    <input type="hidden" th:if="${_csrf != null}"
+                           th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                     <button class="btn btn-sm btn-outline-warning" type="submit">Desativar</button>
                 </form>
 
                 <form th:if="${!u.ativo}" class="d-inline" method="post"
                       th:action="@{|/app/admin/unidades/${u.id}/ativar|}">
+                    <input type="hidden" th:if="${_csrf != null}"
+                           th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                     <button class="btn btn-sm btn-outline-success" type="submit">Ativar</button>
                 </form>
-
-                <button type="button"
-                        class="btn btn-sm btn-outline-danger"
-                        data-bs-target="#confirmDeleteModal"
-                        data-bs-toggle="modal"
-                        th:data-action="@{|/app/admin/unidades/${u.id}/excluir|}"
-                        th:data-entity="${u.nome}">
-                    Excluir
-                </button>
             </td>
         </tr>
         <tr th:if="${#lists.isEmpty(itens)}">
@@ -75,7 +95,7 @@
         <ul class="pagination justify-content-center">
             <li class="page-item" th:classappend="${!hasPrev}? 'disabled'">
                 <a class="page-link"
-                   th:href="@{/app/admin/unidades(page=${pageIdx-1}, termo=${termo}, ativo=${ativo})}">
+                   th:href="@{/app/admin/unidades(page=${pageIdx-1}, termo=${termo}, ativo=${ativo}, sort=${sort}, asc=${asc})}">
                     Anterior
                 </a>
             </li>
@@ -84,56 +104,10 @@
             </li>
             <li class="page-item" th:classappend="${!hasNext}? 'disabled'">
                 <a class="page-link"
-                   th:href="@{/app/admin/unidades(page=${pageIdx+1}, termo=${termo}, ativo=${ativo})}">
+                   th:href="@{/app/admin/unidades(page=${pageIdx+1}, termo=${termo}, ativo=${ativo}, sort=${sort}, asc=${asc})}">
                     Próxima
                 </a>
             </li>
         </ul>
     </nav>
-
-    <!-- Modal excluir -->
-    <div class="modal fade" id="confirmDeleteModal" tabindex="-1"
-         aria-labelledby="confirmDeleteLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header border-0">
-                    <h5 class="modal-title" id="confirmDeleteLabel">Confirmar exclusão</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-                </div>
-                <div class="modal-body">
-                    <p class="mb-1">Tem certeza que deseja excluir a unidade abaixo?</p>
-                    <div class="p-3 rounded bg-light"><strong id="confirmDeleteEntity">—</strong></div>
-                    <p class="text-muted small mb-0 mt-3">Esta ação é permanente.</p>
-                </div>
-                <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <form id="confirmDeleteForm" method="post" class="d-inline">
-                        <input type="hidden" th:if="${_csrf != null}"
-                               th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                        <button type="submit" class="btn btn-danger">Excluir</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            if (typeof bootstrap !== 'object') return;
-            const modalEl = document.getElementById('confirmDeleteModal');
-            if (!modalEl) return;
-
-            const form  = document.getElementById('confirmDeleteForm');
-            const label = document.getElementById('confirmDeleteEntity');
-            const modal = new bootstrap.Modal(modalEl);
-
-            document.querySelectorAll('[data-bs-target="#confirmDeleteModal"]').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    form.action = btn.getAttribute('data-action');
-                    label.textContent = btn.getAttribute('data-entity') || 'Unidade';
-                    modal.show();
-                });
-            });
-        });
-    </script>
 </div>

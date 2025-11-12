@@ -4,18 +4,31 @@
     <form th:action="${isEdit} ? @{'/app/admin/unidades/' + ${id}} : @{/app/admin/unidades}"
           method="post" class="vstack gap-3">
 
+        <!-- Nome -->
         <div>
-            <label class="form-label">Nome</label>
-            <input class="form-control" name="nome" required>
+            <label class="form-label" for="nome">Nome</label>
+            <input class="form-control" id="nome" name="nome" required
+                   th:value="${nome}">
         </div>
 
+        <!-- Gestor -->
         <div>
-            <label class="form-label">Gestor (nome)</label>
-            <input class="form-control" name="gestorNome" placeholder="Seleção futura por usuário">
+            <label class="form-label" for="gestorUsuarioId">Gestor</label>
+            <select class="form-select" id="gestorUsuarioId" name="gestorUsuarioId" required>
+                <option value="" th:if="${!isEdit}" selected disabled>Selecione...</option>
+                <option th:each="g : ${gestores}"
+                        th:value="${g[0]}"
+                        th:text="${g[1]}"
+                        th:selected="${gestorId} == ${g[0]}"></option>
+            </select>
         </div>
 
+
+
+        <!-- Ativo -->
         <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="ativo" name="ativo" checked>
+            <input class="form-check-input" type="checkbox" id="ativo" name="ativo"
+                   th:checked="${isEdit} ? ${ativoChecked} : true">
             <label class="form-check-label" for="ativo">Ativa</label>
         </div>
 

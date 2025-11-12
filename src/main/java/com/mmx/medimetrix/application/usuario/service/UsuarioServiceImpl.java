@@ -7,6 +7,7 @@ import com.mmx.medimetrix.application.usuario.exceptions.EntidadeNaoEncontradaEx
 import com.mmx.medimetrix.application.usuario.port.out.UsuarioDao;
 import com.mmx.medimetrix.application.usuario.queries.UsuarioFiltro;
 import com.mmx.medimetrix.domain.core.Usuario;
+import com.mmx.medimetrix.domain.enums.Papel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -100,6 +101,13 @@ public class UsuarioServiceImpl implements UsuarioService {
                 asc
         );
     }
+
+    @Override
+    public List<Usuario> listByPapelAtivo(Papel papel, boolean ativo) {
+        if (papel == null) throw new IllegalArgumentException("Papel é obrigatório.");
+        return usuarioDao.listByPapelAtivo(papel, ativo);
+    }
+
 
 
     @Override

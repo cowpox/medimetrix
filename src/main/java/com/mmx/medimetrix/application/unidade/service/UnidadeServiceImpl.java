@@ -94,28 +94,32 @@ public class UnidadeServiceImpl implements UnidadeService {
 
     @Override
     public List<Unidade> list(UnidadeFiltro filtro) {
-        // Conversão page/size -> offset/limit
         int page = (filtro == null || filtro.page() == null || filtro.page() < 0) ? 0 : filtro.page();
         int size = (filtro == null || filtro.size() == null || filtro.size() < 1 || filtro.size() > 100) ? 20 : filtro.size();
         int offset = page * size;
         int limit  = size;
 
         String nomeLike = (filtro == null) ? null : filtro.nomeLike();
-        if (StringUtils.hasText(nomeLike)) {
-            return unidadeDao.searchByNomeLikePaged(nomeLike.trim(), offset, limit);
+        Boolean ativo   = (filtro == null) ? null : filtro.ativo();
+
+        String sortBy = (filtro == null || filtro.sortBy() == null) ? "nome" : filtro.sortBy().toLowerCase();
+        boolean asc   = (filtro == null || filtro.asc() == null) ? true : filtro.asc();
+
+        boolean hasTermo = StringUtils.hasText(nomeLike);
+
+        if (hasTermo && ativo != null) {
+            return unidadeDao.searchByNomeOuGestorAndAtivoLikePagedOrdered(nomeLike.trim(), ativo, sortBy, asc, offset, limit);
         }
-        // Se não há filtro por nome, paginar (sem sort no DAO)
-        return unidadeDao.listPaged(offset, limit);
+        if (hasTermo) {
+            return unidadeDao.searchByNomeOuGestorLikePagedOrdered(nomeLike.trim(), sortBy, asc, offset, limit);
+        }
+        if (ativo != null) {
+            return unidadeDao.listByAtivoPagedOrdered(ativo, sortBy, asc, offset, limit);
+        }
+        return unidadeDao.listPagedOrdered(sortBy, asc, offset, limit);
     }
 
-    // Conveniências (opcionalmente usadas pelos controllers):
-    public List<Unidade> listAtivas() {
-        return unidadeDao.listAllActive();
-    }
 
-    public List<Unidade> listByGestor(Long gestorId) {
-        return unidadeDao.listByGestor(gestorId);
-    }
 
     @Override
     public void deactivate(Long id) {

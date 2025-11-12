@@ -5,5 +5,6 @@ public record UnidadeFiltro(
         Integer page,
         Integer size,
         String sortBy,
-        Boolean asc
+        Boolean asc,
+        Boolean ativo   // <= NOVO
 ) {}

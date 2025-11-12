@@ -58,15 +58,28 @@ public class UnidadeController {
             @RequestParam(defaultValue = "0") @Min(0) Integer page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(200) Integer size,
             @RequestParam(defaultValue = "nome") String sortBy,
-            @RequestParam(defaultValue = "true") boolean asc
+            @RequestParam(defaultValue = "true") boolean asc,
+            @RequestParam(required = false) Boolean ativo   // <-- NOVO
     ) {
-        var filtro = new UnidadeFiltro(nome, page, size, sortBy, asc);
+        // normaliza sortBy para o que o service/DAO esperam: id | nome | gestor
+        String s = (sortBy == null ? "nome" : sortBy.trim().toLowerCase());
+        switch (s) {
+            case "id":
+            case "nome":
+            case "gestor":
+                break;
+            default:
+                s = "nome";
+        }
+
+        var filtro = new UnidadeFiltro(nome, page, size, s, asc, ativo); // <-- agora com 'ativo'
         List<UnidadeResponseDTO> resp = service.list(filtro)
                 .stream()
                 .map(UnidadeMapper::toResponse)
                 .toList();
         return ResponseEntity.ok(resp);
     }
+
 
     // PUT -> 204 No Content
     @PutMapping("/{id}")
