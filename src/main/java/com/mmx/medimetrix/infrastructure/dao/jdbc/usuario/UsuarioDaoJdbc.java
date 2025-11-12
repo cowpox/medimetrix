@@ -2,6 +2,7 @@ package com.mmx.medimetrix.infrastructure.dao.jdbc.usuario;
 
 import com.mmx.medimetrix.application.usuario.port.out.UsuarioDao;
 import com.mmx.medimetrix.domain.core.Usuario;
+import com.mmx.medimetrix.domain.enums.Papel;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -33,6 +34,55 @@ public class UsuarioDaoJdbc implements UsuarioDao {
         return jdbc.update(sql, u.getNome(), u.getEmail(), u.getAtivo(),
                 u.getPapel() != null ? u.getPapel().name() : null, u.getIdUsuario());
     }
+
+    @Override
+    public List<Usuario> search(String termo, Papel papel, Boolean ativo,
+                                int page, int size, String sort, boolean asc) {
+
+        StringBuilder sql = new StringBuilder(BASE_SELECT + " WHERE 1=1 ");
+        List<Object> params = new java.util.ArrayList<>();
+
+        // termo -> NOME ou EMAIL (sem acento; se não usar UNACCENT, troque por ILIKE simples)
+        if (termo != null && !termo.isBlank()) {
+            sql.append(" AND (unaccent(NOME) ILIKE unaccent(?) OR unaccent(EMAIL) ILIKE unaccent(?)) ");
+            String like = "%" + termo.trim() + "%";
+            params.add(like);
+            params.add(like);
+        }
+
+        if (papel != null) {
+            sql.append(" AND PAPEL = ? ");
+            params.add(papel.name());
+        }
+
+        if (ativo != null) {
+            sql.append(" AND ATIVO = ? ");
+            params.add(ativo);
+        }
+
+        // ORDER BY (whitelist)
+        String sortCol;
+        switch (sort != null ? sort.toUpperCase() : "NOME") {
+            case "EMAIL"         -> sortCol = "EMAIL";
+            case "PAPEL"         -> sortCol = "PAPEL";
+            case "DATA_CRIACAO"  -> sortCol = "DATA_CRIACAO";
+            case "ID", "ID_USUARIO" -> sortCol = "ID_USUARIO";
+            case "NOME"          -> sortCol = "NOME";
+            default              -> sortCol = "NOME";
+        }
+        sql.append(" ORDER BY ").append(sortCol).append(asc ? " ASC " : " DESC ");
+
+        int limit  = Math.max(1, size);
+        int offset = Math.max(0, page) * limit;
+        sql.append(" LIMIT ? OFFSET ? ");
+        params.add(limit);
+        params.add(offset);
+
+        return jdbc.query(sql.toString(), MAPPER, params.toArray());
+    }
+
+
+
 
     @Override
     public Optional<Usuario> findById(Long id) {

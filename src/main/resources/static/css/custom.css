@@ -85,3 +85,8 @@
     border-color: rgba(255,255,255,.35);
 }
 .topbar .form-control::placeholder { color: rgba(255,255,255,.85); }
+
+/*sort icons*/
+th .sort { font-size: .8rem; margin-left: .05rem; opacity: .25; text-decoration: none; }
+th .sort.active { opacity: 1; font-weight: 600; }
+th .sort:hover { opacity: .75; }

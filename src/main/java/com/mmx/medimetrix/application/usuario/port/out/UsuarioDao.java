@@ -1,6 +1,7 @@
 package com.mmx.medimetrix.application.usuario.port.out;
 
 import com.mmx.medimetrix.domain.core.Usuario;
+import com.mmx.medimetrix.domain.enums.Papel;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,4 +15,8 @@ public interface UsuarioDao {
     int deactivate(Long id);  // ATIVO = FALSE
     int reactivate(Long id);  // ATIVO = TRUE
     int deleteById(Long id);
+
+    // busca com filtros + ordenação + paginação
+    List<Usuario> search(String termo, Papel papel, Boolean ativo,
+                         int page, int size, String sort, boolean asc);
 }

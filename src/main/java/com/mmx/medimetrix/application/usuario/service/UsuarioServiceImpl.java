@@ -84,12 +84,23 @@ public class UsuarioServiceImpl implements UsuarioService {
         int limit = Math.max(1, size);
         int offset = Math.max(0, page) * limit;
 
-        if (filtro != null && filtro.papel() != null) {
-            return usuarioDao.listByPapelPaged(filtro.papel().name(), offset, limit);
+        // Garante que o filtro não é nulo
+        if (filtro == null) {
+            filtro = new UsuarioFiltro(null, null, null);
         }
-        // por ora, ignoramos 'termo' e 'ativo' até evoluir o DAO
-        return usuarioDao.listPaged(offset, limit);
+
+        // Usa o novo DAO que trata termo, papel e ativo
+        return usuarioDao.search(
+                filtro.termo(),
+                filtro.papel(),
+                filtro.ativo(),
+                page,
+                size,
+                sortBy,
+                asc
+        );
     }
+
 
     @Override
     @Transactional

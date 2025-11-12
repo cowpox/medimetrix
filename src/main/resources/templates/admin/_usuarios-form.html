@@ -1,22 +1,32 @@
 <div th:fragment="content">
-    <h2 class="h5 mb-3">Usuário</h2>
-    <form th:action="@{/app/admin/usuarios}" method="post" class="vstack gap-3">
+    <h2 class="h5 mb-3" th:text="${isEdit} ? 'Editar Usuário' : 'Usuário'"></h2>
+
+    <form th:action="${isEdit} ? @{|/app/admin/usuarios/${id}?_method=put|} : @{/app/admin/usuarios}"
+          method="post" th:object="${form}" class="vstack gap-3">
+
         <div>
             <label class="form-label">Nome</label>
-            <input class="form-control" name="nome" required>
+            <input class="form-control" th:field="*{nome}" required>
+            <div class="text-danger" th:if="${#fields.hasErrors('nome')}" th:errors="*{nome}"></div>
         </div>
+
         <div>
             <label class="form-label">E-mail</label>
-            <input type="email" class="form-control" name="email" required>
+            <input type="email" class="form-control" th:field="*{email}" required>
+            <div class="text-danger" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
         </div>
+
         <div>
             <label class="form-label">Papel</label>
-            <select class="form-select" name="papel">
-                <option>ADMIN</option>
-                <option>GESTOR</option>
-                <option>MEDICO</option>
+            <select class="form-select" th:field="*{papel}" required>
+                <option value="">Selecione…</option>
+                <option value="ADMIN">ADMIN</option>
+                <option value="GESTOR">GESTOR</option>
+                <option value="MEDICO">MEDICO</option>
             </select>
+            <div class="text-danger" th:if="${#fields.hasErrors('papel')}" th:errors="*{papel}"></div>
         </div>
+
         <div class="d-flex gap-2 mt-3">
             <button class="btn btn-primary" type="submit">Salvar</button>
             <a class="btn btn-outline-secondary" th:href="@{/app/admin/usuarios}">Cancelar</a>
