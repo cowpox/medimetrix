@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR"
       th:replace="~{_layouts/default :: layout(
-          pageTitle='Especialidade',
+          pageTitle=${isEdit} ? 'Editar Especialidade' : 'Nova Especialidade',
           breadcrumb='Admin',
           conteudo=~{admin/_especialidades-form :: content}
       )}">

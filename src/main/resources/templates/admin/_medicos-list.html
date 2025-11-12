@@ -4,28 +4,150 @@
         <a class="btn btn-success" th:href="@{/app/admin/medicos/novo}">Novo</a>
     </div>
 
-    <div class="row g-2 align-items-center mb-2">
-        <div class="col-auto"><label class="col-form-label">CRM:</label></div>
-        <div class="col-auto"><input class="form-control form-control-sm" placeholder="Número"></div>
-        <div class="col-auto"><input class="form-control form-control-sm" placeholder="UF"></div>
-        <div class="col ms-auto" style="max-width:320px;">
-            <div class="input-group input-group-sm">
-                <input type="search" class="form-control" placeholder="Nome ou e-mail">
-                <button class="btn btn-outline-secondary">OK</button>
+    <!-- Filtros -->
+    <form class="row g-2 mb-3" method="get" th:action="@{/app/admin/medicos}">
+        <div class="col-md-3">
+            <input class="form-control" type="text" name="termo"
+                   placeholder="Nome ou CRM" th:value="${termo}">
+        </div>
+
+        <div class="col-md-2">
+            <select class="form-select" name="especialidadeId">
+                <option value="">Especialidade (todas)</option>
+                <option th:each="e : ${especialidades}"
+                        th:value="${e.id}" th:text="${e.nome}"
+                        th:selected="${especialidadeId} == ${e.id}"></option>
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <select class="form-select" name="unidadeId">
+                <option value="">Unidade (todas)</option>
+                <option th:each="u : ${unidades}"
+                        th:value="${u.id}" th:text="${u.nome}"
+                        th:selected="${unidadeId} == ${u.id}"></option>
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <select class="form-select" name="ativo">
+                <option value="">Status (todos)</option>
+                <option value="true"  th:selected="${ativo == 'true'}">Ativos</option>
+                <option value="false" th:selected="${ativo == 'false'}">Inativos</option>
+            </select>
+        </div>
+
+        <div class="col-auto">
+            <button class="btn btn-primary" type="submit">Filtrar</button>
+            <a class="btn btn-secondary" th:href="@{/app/admin/medicos}">Limpar</a>
+        </div>
+    </form>
+
+
+
+    <!-- Tabela -->
+    <table class="table table-striped align-middle">
+        <thead>
+        <tr>
+            <th>Nome</th>
+            <th>CRM</th>
+            <th>Especialidade</th>
+            <th>Unidade</th>
+            <th>Status</th>
+            <th class="text-end">Ações</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="m : ${itens}">
+            <td th:text="${m.nome}">Dr. Nome</td>
+            <td th:text="${m.crmNumero + ' / ' + m.crmUf}">12345 / PR</td>
+            <td th:text="${m.especialidadeNome}">Clínica Médica</td>
+            <td th:text="${m.unidadeNome}">PA Centro</td>
+            <td><span th:text="${m.ativo} ? 'Ativo' : 'Inativo'">Ativo</span></td>
+            <td class="text-end">
+                <a class="btn btn-sm btn-outline-primary"
+                   th:href="@{|/app/admin/medicos/${m.id}/editar|}">Editar</a>
+
+                <button type="button"
+                        class="btn btn-sm btn-outline-danger"
+                        data-bs-target="#confirmDeleteModal"
+                        data-bs-toggle="modal"
+                        th:data-action="@{|/app/admin/medicos/${m.id}/excluir|}"
+                        th:data-entity="${m.nome}">
+                    Excluir
+                </button>
+            </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(itens)}">
+            <td colspan="6" class="text-center text-muted">Nenhum médico encontrado.</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <!-- Paginação -->
+    <nav class="mt-3" th:if="${itens}">
+        <ul class="pagination justify-content-center">
+            <li class="page-item" th:classappend="${!hasPrev}? 'disabled'">
+                <a class="page-link"
+                   th:href="@{/app/admin/medicos(page=${pageIdx-1}, termo=${termo}, especialidadeId=${especialidadeId}, unidadeId=${unidadeId}, ativo=${ativo})}">
+                    Anterior
+                </a>
+            </li>
+            <li class="page-item disabled">
+                <span class="page-link" th:text="'Página ' + (${pageIdx}+1)"></span>
+            </li>
+            <li class="page-item" th:classappend="${!hasNext}? 'disabled'">
+                <a class="page-link"
+                   th:href="@{/app/admin/medicos(page=${pageIdx+1}, termo=${termo}, especialidadeId=${especialidadeId}, unidadeId=${unidadeId}, ativo=${ativo})}">
+                    Próxima
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Modal de exclusão (reutilizável) -->
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1"
+         aria-labelledby="confirmDeleteLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title" id="confirmDeleteLabel">Confirmar exclusão</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-1">Tem certeza que deseja excluir o médico abaixo?</p>
+                    <div class="p-3 rounded bg-light"><strong id="confirmDeleteEntity">—</strong></div>
+                    <p class="text-muted small mb-0 mt-3">Esta ação é permanente.</p>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <form id="confirmDeleteForm" method="post" class="d-inline">
+                        <input type="hidden" th:if="${_csrf != null}"
+                               th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <button type="submit" class="btn btn-danger">Excluir</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 
-    <table class="table table-hover align-middle">
-        <thead><tr><th>Nome</th><th>CRM</th><th>Especialidade</th><th class="text-end">Ações</th></tr></thead>
-        <tbody>
-        <tr>
-            <td>Dr. João Silva</td><td>12345 / PR</td><td>Clínica Médica</td>
-            <td class="text-end">
-                <a class="btn btn-sm btn-outline-primary" th:href="@{/app/admin/medicos/1/editar}">Editar</a>
-                <button class="btn btn-sm btn-outline-danger">Excluir</button>
-            </td>
-        </tr>
-        </tbody>
-    </table>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof bootstrap !== 'object') return;
+            const modalEl = document.getElementById('confirmDeleteModal');
+            if (!modalEl) return;
+
+            const form  = document.getElementById('confirmDeleteForm');
+            const label = document.getElementById('confirmDeleteEntity');
+            const modal = new bootstrap.Modal(modalEl);
+
+            document.querySelectorAll('[data-bs-target="#confirmDeleteModal"]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    form.action = btn.getAttribute('data-action');
+                    label.textContent = btn.getAttribute('data-entity') || 'Médico';
+                    modal.show();
+                });
+            });
+        });
+    </script>
 </div>
