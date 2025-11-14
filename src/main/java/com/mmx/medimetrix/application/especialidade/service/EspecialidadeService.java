@@ -13,6 +13,7 @@ public interface EspecialidadeService {
     Especialidade update(Long id, EspecialidadeUpdate cmd);
     Optional<Especialidade> findById(Long id);
     List<Especialidade> list(EspecialidadeFiltro filtro);
+    List<Especialidade> listAtivas();
     void deactivate(Long id);
     void activate(Long id);
 }

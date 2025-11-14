@@ -85,6 +85,7 @@ public class EspecialidadeServiceImpl implements EspecialidadeService {
 
 
     // Conveniências
+    @Override
     public List<Especialidade> listAtivas() {
         return dao.listAllActive();
     }

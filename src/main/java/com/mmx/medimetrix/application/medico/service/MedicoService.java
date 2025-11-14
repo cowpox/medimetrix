@@ -18,4 +18,6 @@ public interface MedicoService {
     List<Medico> listPaged(int page, int size);
 
     void deleteByUsuarioId(Long usuarioId);
+    // NOVO: tenta excluir só se não houver vínculos em PARTICIPACAO
+    boolean deleteIfSemVinculos(Long usuarioId);
 }

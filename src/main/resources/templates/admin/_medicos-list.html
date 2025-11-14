@@ -4,6 +4,10 @@
         <a class="btn btn-success" th:href="@{/app/admin/medicos/novo}">Novo</a>
     </div>
 
+    <!-- Mensagens de feedback (opcional) -->
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}"   class="alert alert-danger"  th:text="${error}"></div>
+
     <!-- Filtros -->
     <form class="row g-2 mb-3" method="get" th:action="@{/app/admin/medicos}">
         <div class="col-md-3">
@@ -15,8 +19,9 @@
             <select class="form-select" name="especialidadeId">
                 <option value="">Especialidade (todas)</option>
                 <option th:each="e : ${especialidades}"
-                        th:value="${e.id}" th:text="${e.nome}"
-                        th:selected="${especialidadeId} == ${e.id}"></option>
+                        th:value="${e.idEspecialidade}"
+                        th:text="${e.nome}"
+                        th:selected="${especialidadeId} == ${e.idEspecialidade}"></option>
             </select>
         </div>
 
@@ -24,8 +29,9 @@
             <select class="form-select" name="unidadeId">
                 <option value="">Unidade (todas)</option>
                 <option th:each="u : ${unidades}"
-                        th:value="${u.id}" th:text="${u.nome}"
-                        th:selected="${unidadeId} == ${u.id}"></option>
+                        th:value="${u.idUnidade}"
+                        th:text="${u.nome}"
+                        th:selected="${unidadeId} == ${u.idUnidade}"></option>
             </select>
         </div>
 
@@ -43,14 +49,62 @@
         </div>
     </form>
 
-
-
     <!-- Tabela -->
     <table class="table table-striped align-middle">
         <thead>
         <tr>
-            <th>Nome</th>
-            <th>CRM</th>
+            <th>
+                Nome
+                <a class="sort"
+                   th:classappend="${sort}=='nome' and ${dir}=='asc' ? ' active' : ''"
+                   th:href="@{/app/admin/medicos(
+                        sort='nome',
+                        dir='asc',
+                        page=0,
+                        termo=${termo},
+                        especialidadeId=${especialidadeId},
+                        unidadeId=${unidadeId},
+                        ativo=${ativo}
+                   )}">▲</a>
+                <a class="sort"
+                   th:classappend="${sort}=='nome' and ${dir}=='desc' ? ' active' : ''"
+                   th:href="@{/app/admin/medicos(
+                        sort='nome',
+                        dir='desc',
+                        page=0,
+                        termo=${termo},
+                        especialidadeId=${especialidadeId},
+                        unidadeId=${unidadeId},
+                        ativo=${ativo}
+                   )}">▼</a>
+            </th>
+
+            <th>
+                CRM
+                <a class="sort"
+                   th:classappend="${sort}=='crm' and ${dir}=='asc' ? ' active' : ''"
+                   th:href="@{/app/admin/medicos(
+                        sort='crm',
+                        dir='asc',
+                        page=0,
+                        termo=${termo},
+                        especialidadeId=${especialidadeId},
+                        unidadeId=${unidadeId},
+                        ativo=${ativo}
+                   )}">▲</a>
+                <a class="sort"
+                   th:classappend="${sort}=='crm' and ${dir}=='desc' ? ' active' : ''"
+                   th:href="@{/app/admin/medicos(
+                        sort='crm',
+                        dir='desc',
+                        page=0,
+                        termo=${termo},
+                        especialidadeId=${especialidadeId},
+                        unidadeId=${unidadeId},
+                        ativo=${ativo}
+                   )}">▼</a>
+            </th>
+
             <th>Especialidade</th>
             <th>Unidade</th>
             <th>Status</th>
@@ -89,7 +143,15 @@
         <ul class="pagination justify-content-center">
             <li class="page-item" th:classappend="${!hasPrev}? 'disabled'">
                 <a class="page-link"
-                   th:href="@{/app/admin/medicos(page=${pageIdx-1}, termo=${termo}, especialidadeId=${especialidadeId}, unidadeId=${unidadeId}, ativo=${ativo})}">
+                   th:href="@{/app/admin/medicos(
+                        page=${pageIdx-1},
+                        sort=${sort},
+                        dir=${dir},
+                        termo=${termo},
+                        especialidadeId=${especialidadeId},
+                        unidadeId=${unidadeId},
+                        ativo=${ativo}
+                   )}">
                     Anterior
                 </a>
             </li>
@@ -98,7 +160,15 @@
             </li>
             <li class="page-item" th:classappend="${!hasNext}? 'disabled'">
                 <a class="page-link"
-                   th:href="@{/app/admin/medicos(page=${pageIdx+1}, termo=${termo}, especialidadeId=${especialidadeId}, unidadeId=${unidadeId}, ativo=${ativo})}">
+                   th:href="@{/app/admin/medicos(
+                        page=${pageIdx+1},
+                        sort=${sort},
+                        dir=${dir},
+                        termo=${termo},
+                        especialidadeId=${especialidadeId},
+                        unidadeId=${unidadeId},
+                        ativo=${ativo}
+                   )}">
                     Próxima
                 </a>
             </li>
