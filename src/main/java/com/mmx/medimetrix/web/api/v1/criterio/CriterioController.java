@@ -37,13 +37,17 @@ public class CriterioController {
         var created = service.create(new CriterioCreate(
                 dto.nome(),
                 dto.definicaoOperacional(),
-                dto.descricao()
+                dto.descricao(),
+                dto.peso(),
+                dto.ordemSugerida(),
+                dto.ativo()
         ));
         URI location = uriBuilder.path("/api/v1/criterios/{id}")
                 .buildAndExpand(created.getIdCriterio())
                 .toUri();
         return ResponseEntity.created(location).build();
     }
+
 
     // GET by id -> 200 OK ou 404
     @GetMapping("/{id}")
@@ -76,9 +80,12 @@ public class CriterioController {
                 dto.nome(),
                 dto.definicaoOperacional(),
                 dto.descricao(),
+                dto.peso(),
+                dto.ordemSugerida(),
                 dto.ativo()
         ));
     }
+
 
 
     // DELETE (desativar) -> 204 No Content

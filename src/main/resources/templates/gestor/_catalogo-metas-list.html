@@ -1,43 +1,99 @@
 <div th:fragment="content">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="h5 mb-0">Catálogo • Metas</h2>
-        <a class="btn btn-success" th:href="@{/app/catalogo/metas/novo}">Novo</a>
+        <a class="btn btn-success" th:href="@{/app/catalogo/metas/novo}">Nova meta</a>
     </div>
 
-    <div class="row g-2 align-items-center mb-2">
-        <div class="col-auto"><label class="col-form-label">Critério:</label></div>
-        <div class="col-auto">
-            <select class="form-select form-select-sm">
-                <option>Todas</option>
-                <option>Acolhimento</option>
-                <option>Segurança</option>
+    <!-- Filtros -->
+    <form class="row g-2 mb-3" method="get" th:action="@{/app/catalogo/metas}">
+        <!-- Critério -->
+        <div class="col-md-4">
+            <label class="form-label" for="filtroCriterio">Critério</label>
+            <select id="filtroCriterio" class="form-select" name="criterioId">
+                <option value="">Todos</option>
+                <option th:each="c : ${criterios}"
+                        th:value="${c.idCriterio}"
+                        th:text="${c.nome}"
+                        th:selected="${c.idCriterio} == ${filtroCriterioId}">
+                </option>
             </select>
         </div>
-        <div class="col ms-auto" style="max-width: 300px;">
-            <div class="input-group input-group-sm">
-                <input type="search" class="form-control" placeholder="Buscar...">
-                <button class="btn btn-outline-secondary">OK</button>
-            </div>
-        </div>
-    </div>
 
-    <table class="table table-striped align-middle">
+        <!-- Escopo -->
+        <div class="col-md-3">
+            <label class="form-label" for="filtroEscopo">Escopo</label>
+            <select id="filtroEscopo" class="form-select" name="escopo">
+                <option value="">Todos</option>
+                <option value="GLOBAL"
+                        th:selected="${filtroEscopo} == 'GLOBAL'">Globais</option>
+                <option value="UNIDADE"
+                        th:selected="${filtroEscopo} == 'UNIDADE'">Por Unidade</option>
+                <option value="ESPECIALIDADE"
+                        th:selected="${filtroEscopo} == 'ESPECIALIDADE'">Por Especialidade</option>
+            </select>
+        </div>
+
+        <!-- Status -->
+        <div class="col-md-3">
+            <label class="form-label" for="filtroStatus">Status</label>
+            <select id="filtroStatus" class="form-select" name="status">
+                <option value="">Todos</option>
+                <option value="true"
+                        th:selected="${filtroStatus} == 'true'">Ativas</option>
+                <option value="false"
+                        th:selected="${filtroStatus} == 'false'">Inativas</option>
+            </select>
+        </div>
+
+        <!-- Botões -->
+        <div class="col-md-2 d-flex align-items-end justify-content-end gap-2">
+            <button class="btn btn-primary" type="submit">Filtrar</button>
+            <a class="btn btn-outline-secondary"
+               th:href="@{/app/catalogo/metas}">Limpar</a>
+        </div>
+    </form>
+
+    <!-- Tabela de metas -->
+    <table class="table table-hover align-middle">
         <thead>
         <tr>
             <th>Meta</th>
             <th>Critério</th>
-            <th>Valor Alvo</th>
-            <th class="text-end">Ações</th>
+            <th style="width: 220px;">Vigência</th>
+            <th style="width: 180px;">Escopo</th>
+            <th class="text-center" style="width: 110px;">Prioridade</th>
+            <th class="text-center" style="width: 90px;">Status</th>
+            <th class="text-end" style="width: 140px;">Ações</th>
         </tr>
         </thead>
         <tbody>
-        <tr>
-            <td>Média ≥ 4.0 no período</td>
-            <td>Acolhimento</td>
-            <td>4.0</td>
+        <tr th:each="m : ${metas}">
+            <td th:text="${m.metaLabel}">Média Global ≥ 4,40</td>
+            <td th:text="${m.criterioNome}">Segurança do Paciente</td>
+            <td th:text="${m.vigenciaLabel}">01/01/2025 em diante</td>
+            <td th:text="${m.escopoLabel}">Global</td>
+            <td class="text-center">
+                <span class="badge"
+                      th:text="${m.prioridadeLabel}"
+                      th:classappend="' ' + ${m.prioridadeBadgeClass}">Alta</span>
+            </td>
+            <td class="text-center">
+                <span class="badge"
+                      th:text="${m.ativo} ? 'Ativa' : 'Inativa'"
+                      th:classappend="${m.ativo} ? ' text-bg-success' : ' text-bg-secondary'">
+                    Ativa
+                </span>
+            </td>
             <td class="text-end">
-                <a class="btn btn-sm btn-outline-primary" th:href="@{/app/catalogo/metas/1/editar}">Editar</a>
+                <a class="btn btn-sm btn-outline-primary"
+                   th:href="@{'/app/catalogo/metas/' + ${m.id} + '/editar'}">Editar</a>
                 <button class="btn btn-sm btn-outline-danger">Excluir</button>
+            </td>
+        </tr>
+
+        <tr th:if="${#lists.isEmpty(metas)}">
+            <td colspan="7" class="text-center text-muted">
+                Nenhuma meta encontrada com os filtros atuais.
             </td>
         </tr>
         </tbody>

@@ -24,29 +24,41 @@ public class MetaServiceImpl implements MetaService {
         if (cmd == null || cmd.idCriterio() == null || cmd.alvo() == null || !StringUtils.hasText(cmd.operador())) {
             throw new IllegalArgumentException("Critério, alvo e operador são obrigatórios.");
         }
+
         Meta m = new Meta();
         m.setIdCriterio(cmd.idCriterio());
         m.setIdUnidade(cmd.idUnidade());
         m.setIdEspecialidade(cmd.idEspecialidade());
         m.setAlvo(cmd.alvo());
         m.setOperador(cmd.operador());
-        m.setVigenciaInicio(cmd.vigenciaInicio());
+
+        // 👇 Regra nova: se não vier vigência início, usa hoje
+        if (cmd.vigenciaInicio() != null) {
+            m.setVigenciaInicio(cmd.vigenciaInicio());
+        } else {
+            m.setVigenciaInicio(java.time.LocalDate.now());
+        }
+
+        // Vigência fim continua exatamente como o usuário mandar (pode ser null)
         m.setVigenciaFim(cmd.vigenciaFim());
+
         m.setPrioridade(cmd.prioridade());
         m.setJustificativa(cmd.justificativa());
         m.setAtivo(true);
+
         Long id = dao.insert(m);
-        return dao.findById(id).orElseThrow(() -> new NoSuchElementException("Meta não encontrada após inserir."));
+        return dao.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Meta não encontrada após inserir."));
     }
+
 
     @Override
     public Meta update(Long id, MetaUpdate cmd) {
         Meta atual = dao.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Meta não encontrada."));
 
+        // campos “imutáveis” ou raramente nulos: segue a lógica antiga
         if (cmd.idCriterio() != null)     atual.setIdCriterio(cmd.idCriterio());
-        if (cmd.idUnidade() != null)      atual.setIdUnidade(cmd.idUnidade());
-        if (cmd.idEspecialidade() != null)atual.setIdEspecialidade(cmd.idEspecialidade());
         if (cmd.alvo() != null)           atual.setAlvo(cmd.alvo());
         if (cmd.operador() != null)       atual.setOperador(cmd.operador());
         if (cmd.vigenciaInicio() != null) atual.setVigenciaInicio(cmd.vigenciaInicio());
@@ -55,10 +67,17 @@ public class MetaServiceImpl implements MetaService {
         if (cmd.prioridade() != null)     atual.setPrioridade(cmd.prioridade());
         if (cmd.justificativa() != null)  atual.setJustificativa(cmd.justificativa());
 
+        // Ponto de atenção:
+        // unidade/especialidade podem precisar ser LIMPOS.
+        // Então copiamos SEM o if != null (permitindo setar null).
+        atual.setIdUnidade(cmd.idUnidade());
+        atual.setIdEspecialidade(cmd.idEspecialidade());
+
         dao.update(atual);
         return dao.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Meta não encontrada após atualizar."));
     }
+
 
     @Override public Optional<Meta> findById(Long id) { return dao.findById(id); }
 
@@ -87,10 +106,18 @@ public class MetaServiceImpl implements MetaService {
             );
         }
 
-        // 3) fallback: vigentes na data (se não informada, usa hoje)
-        java.time.LocalDate data = (filtro.naData() != null) ? filtro.naData() : java.time.LocalDate.now();
-        return dao.listAtivasVigentesEm(data, offset, size);
+        // 3) Sem escopo definido:
+
+        // 3.1 Se vier 'naData' => metas ATIVAS e VIGENTES nessa data
+        if (filtro.naData() != null) {
+            return dao.listAtivasVigentesEm(filtro.naData(), offset, size);
+        }
+
+        // 3.2 Sem 'naData' => todas as metas (ativas + inativas),
+        // o filtro de status será aplicado depois no controller
+        return dao.listAll(offset, size);
     }
+
 
     @Override public void activate(Long id) { dao.reactivate(id); }
     @Override public void deactivate(Long id) { dao.deactivate(id); }

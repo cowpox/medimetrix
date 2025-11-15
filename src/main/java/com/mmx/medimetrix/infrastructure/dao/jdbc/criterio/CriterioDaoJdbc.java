@@ -81,4 +81,76 @@ public class CriterioDaoJdbc implements CriterioDao {
         final String sql = "DELETE FROM MEDIMETRIX.CRITERIO WHERE ID_CRITERIO = ?";
         return jdbc.update(sql, id);
     }
+
+    @Override
+    public Integer findMaxOrdem() {
+        final String sql = "SELECT COALESCE(MAX(ORDEM_SUGERIDA), 0) FROM MEDIMETRIX.CRITERIO";
+        return jdbc.queryForObject(sql, Integer.class);
+    }
+
+
+
+    @Override
+    public int swapOrdem(Long idA, Long idB) {
+        if (idA == null || idB == null || idA.equals(idB)) {
+            return 0;
+        }
+
+        final String lockSql = """
+        SELECT ID_CRITERIO, ORDEM_SUGERIDA
+        FROM MEDIMETRIX.CRITERIO
+        WHERE ID_CRITERIO IN (?, ?)
+        FOR UPDATE
+        """;
+
+        var rows = jdbc.query(lockSql,
+                (rs, i) -> new Object[]{
+                        rs.getLong("ID_CRITERIO"),
+                        (Integer) rs.getObject("ORDEM_SUGERIDA")
+                },
+                idA, idB
+        );
+
+        if (rows.size() < 2) {
+            return 0; // algum dos dois não existe
+        }
+
+        Integer ordemA = null;
+        Integer ordemB = null;
+
+        for (Object[] r : rows) {
+            Long id = (Long) r[0];
+            Integer ordem = (Integer) r[1];
+            if (id.equals(idA)) {
+                ordemA = ordem;
+            } else if (id.equals(idB)) {
+                ordemB = ordem;
+            }
+        }
+
+        final String updateSql = """
+        UPDATE MEDIMETRIX.CRITERIO
+        SET ORDEM_SUGERIDA = CASE
+            WHEN ID_CRITERIO = ? THEN ?
+            WHEN ID_CRITERIO = ? THEN ?
+            ELSE ORDEM_SUGERIDA
+        END
+        WHERE ID_CRITERIO IN (?, ?)
+        """;
+
+        // troca ordens (inclusive se alguma for null)
+        return jdbc.update(updateSql,
+                idA, ordemB,
+                idB, ordemA,
+                idA, idB
+        );
+    }
+
+    @Override
+    public List<Criterio> listAllOrdered() {
+        final String sql = BASE_SELECT + " ORDER BY ORDEM_SUGERIDA NULLS LAST, NOME";
+        return jdbc.query(sql, MAPPER);
+    }
+
+
 }

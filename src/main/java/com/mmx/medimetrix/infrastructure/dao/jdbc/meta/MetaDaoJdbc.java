@@ -60,6 +60,17 @@ public class MetaDaoJdbc implements MetaDao {
     }
 
     @Override
+    public List<Meta> listAll(Integer offset, Integer limit) {
+        final String sql = BASE_SELECT +
+                " ORDER BY PRIORIDADE NULLS LAST, ID_META DESC " +
+                " LIMIT ? OFFSET ?";
+        return jdbc.query(sql, MAPPER,
+                limit != null ? limit : 50,
+                offset != null ? offset : 0);
+    }
+
+
+    @Override
     public int deactivate(Long id) {
         final String sql = "UPDATE MEDIMETRIX.META SET ATIVO = FALSE, DATA_ULTIMA_EDICAO = CURRENT_TIMESTAMP WHERE ID_META = ?";
         return jdbc.update(sql, id);

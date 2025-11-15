@@ -15,4 +15,8 @@ public interface CriterioService {
     List<Criterio> list(CriterioFiltro filtro);
     void activate(Long id);
     void deactivate(Long id);
+    void moveUp(Long id);
+    void moveDown(Long id);
+    int getMaxOrdem();
+
 }

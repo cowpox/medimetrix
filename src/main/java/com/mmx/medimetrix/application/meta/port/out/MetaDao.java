@@ -12,6 +12,7 @@ public interface MetaDao {
     List<Meta> listByCriterio(Long idCriterio, Integer offset, Integer limit);
     List<Meta> listByEscopo(Long idCriterio, Long idUnidade, Long idEspecialidade, Integer offset, Integer limit);
     List<Meta> listAtivasVigentesEm(LocalDate data, Integer offset, Integer limit);
+    List<Meta> listAll(Integer offset, Integer limit);
     int deactivate(Long id);
     int reactivate(Long id);
     int deleteById(Long id);

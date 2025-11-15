@@ -15,4 +15,7 @@ public interface CriterioDao {
     int deactivate(Long id);
     int reactivate(Long id);
     int deleteById(Long id);
+    Integer findMaxOrdem();
+    int swapOrdem(Long idA, Long idB);
+    List<Criterio> listAllOrdered();
 }
