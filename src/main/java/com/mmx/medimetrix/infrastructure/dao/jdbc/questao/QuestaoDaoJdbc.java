@@ -67,6 +67,26 @@ public class QuestaoDaoJdbc implements QuestaoDao {
     }
 
     @Override
+    public boolean hasUso(Long idQuestao) {
+        // Verifica vínculo com avaliação
+        Integer count1 = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM MEDIMETRIX.AVALIACAO_QUESTAO WHERE ID_QUESTAO = ?",
+                Integer.class,
+                idQuestao
+        );
+
+        // Verifica respostas existentes
+        Integer count2 = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM MEDIMETRIX.RESPOSTA WHERE ID_QUESTAO = ?",
+                Integer.class,
+                idQuestao
+        );
+
+        return (count1 != null && count1 > 0) || (count2 != null && count2 > 0);
+    }
+
+
+    @Override
     public int deactivate(Long id) {
         final String sql = "UPDATE MEDIMETRIX.QUESTAO SET ATIVO = FALSE, DATA_ULTIMA_EDICAO = CURRENT_TIMESTAMP WHERE ID_QUESTAO = ?";
         return jdbc.update(sql, id);

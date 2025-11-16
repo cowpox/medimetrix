@@ -1,45 +1,222 @@
 <div th:fragment="content">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="h5 mb-0">Catálogo • Questões</h2>
-        <a class="btn btn-success" th:href="@{/app/catalogo/questoes/novo}">Novo</a>
+        <a class="btn btn-success" th:href="@{/app/catalogo/questoes/novo}">Nova questão</a>
     </div>
 
-    <div class="row g-2 align-items-center mb-2">
-        <div class="col-auto"><label class="col-form-label">Critério:</label></div>
-        <div class="col-auto">
-            <select class="form-select form-select-sm">
-                <option>Todas</option>
-                <option>Acolhimento</option>
-                <option>Segurança</option>
+    <!-- Filtros -->
+    <form class="row g-2 mb-3" method="get" th:action="@{/app/catalogo/questoes}">
+        <!-- Critério -->
+        <div class="col-md-3">
+            <label class="form-label" for="filtroCriterio">Critério</label>
+            <select id="filtroCriterio" class="form-select" name="criterioId">
+                <option value="">Todos</option>
+                <option th:each="c : ${criterios}"
+                        th:value="${c.idCriterio}"
+                        th:text="${c.nome}"
+                        th:selected="${filtroCriterioId} == ${c.idCriterio}">Critério</option>
             </select>
         </div>
-        <div class="col ms-auto" style="max-width: 300px;">
-            <div class="input-group input-group-sm">
-                <input type="search" class="form-control" placeholder="Buscar...">
-                <button class="btn btn-outline-secondary">OK</button>
-            </div>
-        </div>
-    </div>
 
+        <!-- Sensibilidade -->
+        <div class="col-md-2">
+            <label class="form-label" for="filtroSensivel">Sensibilidade</label>
+            <select id="filtroSensivel" class="form-select" name="sensivel">
+                <option value="">Todas</option>
+                <option value="true"
+                        th:selected="${filtroSensivel} == 'true'">Sensível</option>
+                <option value="false"
+                        th:selected="${filtroSensivel} == 'false'">Não sensível</option>
+            </select>
+        </div>
+
+        <!-- Visibilidade -->
+        <div class="col-md-2">
+            <label class="form-label" for="filtroVisivel">Visibilidade</label>
+            <select id="filtroVisivel" class="form-select" name="visivel">
+                <option value="">Todas</option>
+                <option value="true"
+                        th:selected="${filtroVisivel} == 'true'">Visível p/ gestor</option>
+                <option value="false"
+                        th:selected="${filtroVisivel} == 'false'">Oculta p/ gestor</option>
+            </select>
+        </div>
+
+        <!-- Termo de busca -->
+        <div class="col-md-3">
+            <label class="form-label" for="filtroTermo">Buscar por enunciado</label>
+            <input id="filtroTermo" type="search" class="form-control"
+                   name="termo"
+                   placeholder="Parte do enunciado..."
+                   th:value="${filtroTermo}">
+        </div>
+
+        <!-- Botões -->
+        <div class="col-md-2 d-flex align-items-end justify-content-end gap-2">
+            <button class="btn btn-primary" type="submit">Filtrar</button>
+            <a class="btn btn-outline-secondary"
+               th:href="@{/app/catalogo/questoes}">Limpar</a>
+        </div>
+    </form>
+
+
+    <!-- Tabela de questões -->
     <table class="table table-hover align-middle">
         <thead>
         <tr>
             <th>Enunciado</th>
             <th>Critério</th>
-            <th>Tipo</th>
+            <th class="text-center">Privacidade</th>
+            <th class="text-center">Status</th>
             <th class="text-end">Ações</th>
         </tr>
         </thead>
         <tbody>
-        <tr>
-            <td>O médico explica o diagnóstico de forma clara?</td>
-            <td>Acolhimento</td>
-            <td>Likert 1–5</td>
+        <tr th:each="q : ${questoes}">
+            <td th:text="${q.enunciado}">Enunciado</td>
+            <td th:text="${q.criterioNome}">Critério</td>
+            <td class="text-center">
+                <span class="badge me-1"
+                      th:text="${q.sensivel} ? 'Sensível' : 'Não sensível'"
+                      th:classappend="${q.sensivel} ? ' text-bg-danger' : ' text-bg-secondary'">
+                    Sensível
+                </span>
+                <span class="badge"
+                      th:text="${q.visivelParaGestor} ? 'Visível p/ gestor' : 'Oculta p/ gestor'"
+                      th:classappend="${q.visivelParaGestor} ? ' text-bg-info' : ' text-bg-dark'">
+                    Visível p/ gestor
+                </span>
+            </td>
+            <td class="text-center">
+                <span class="badge"
+                      th:text="${q.ativo} ? 'Ativa' : 'Inativa'"
+                      th:classappend="${q.ativo} ? ' text-bg-success' : ' text-bg-secondary'">
+                    Ativa
+                </span>
+            </td>
             <td class="text-end">
-                <a class="btn btn-sm btn-outline-primary" th:href="@{/app/catalogo/questoes/1/editar}">Editar</a>
-                <button class="btn btn-sm btn-outline-danger">Excluir</button>
+                <a class="btn btn-sm btn-outline-primary me-1"
+                   th:href="@{'/app/catalogo/questoes/' + ${q.id} + '/editar'}">
+                    Editar
+                </a>
+
+                <button type="button"
+                        class="btn btn-sm btn-outline-danger"
+                        data-bs-toggle="modal"
+                        data-bs-target="#confirmDeleteQuestaoModal"
+                        th:attr="data-questao-id=${q.id}, data-questao-enunciado=${q.enunciado}">
+                    Excluir
+                </button>
+            </td>
+
+        </tr>
+
+        <tr th:if="${#lists.isEmpty(questoes)}">
+            <td colspan="6" class="text-center text-muted">
+                Nenhuma questão encontrada com os filtros atuais.
             </td>
         </tr>
         </tbody>
     </table>
+
+    <!-- Paginação -->
+    <nav class="mt-3" th:if="${questoes}">
+        <ul class="pagination justify-content-center">
+            <li class="page-item" th:classappend="${!hasPrev}? 'disabled'">
+                <a class="page-link"
+                   th:href="@{/app/catalogo/questoes(
+                        page=${pageIdx-1},
+                        size=${size},
+                        criterioId=${filtroCriterioId},
+                        sensivel=${filtroSensivel},
+                        visivel=${filtroVisivel},
+                        termo=${filtroTermo}
+                   )}">
+                    Anterior
+                </a>
+            </li>
+
+            <li class="page-item disabled">
+                <span class="page-link"
+                      th:text="'Página ' + (${pageIdx}+1)"></span>
+            </li>
+
+            <li class="page-item" th:classappend="${!hasNext}? 'disabled'">
+                <a class="page-link"
+                   th:href="@{/app/catalogo/questoes(
+                        page=${pageIdx+1},
+                        size=${size},
+                        criterioId=${filtroCriterioId},
+                        sensivel=${filtroSensivel},
+                        visivel=${filtroVisivel},
+                        termo=${filtroTermo}
+                   )}">
+                    Próxima
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Modal de confirmação de exclusão de Questão -->
+    <div class="modal fade" id="confirmDeleteQuestaoModal" tabindex="-1"
+         aria-labelledby="confirmDeleteQuestaoLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title" id="confirmDeleteQuestaoLabel">Confirmar exclusão</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-1">Tem certeza que deseja excluir a questão abaixo?</p>
+                    <div class="p-3 rounded bg-light">
+                        <strong id="confirmDeleteQuestao">—</strong>
+                    </div>
+                    <p class="text-muted small mb-0 mt-3">
+                        Esta ação é permanente (em caso de uso, a questão será apenas desativada no catálogo).
+                    </p>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+                    <form id="confirmDeleteQuestaoForm" method="post" class="d-inline">
+                        <input type="hidden" th:if="${_csrf != null}"
+                               th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <button type="submit" class="btn btn-danger">Excluir</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        document.addEventListener('DOMContentLoaded', function () {
+            var modalEl = document.getElementById('confirmDeleteQuestaoModal');
+            if (!modalEl) return;
+
+            modalEl.addEventListener('show.bs.modal', function (event) {
+                var button = event.relatedTarget;
+                if (!button) return;
+
+                var questaoId = button.getAttribute('data-questao-id');
+                var enunciado = button.getAttribute('data-questao-enunciado');
+
+                var labelEl = modalEl.querySelector('#confirmDeleteQuestao');
+                var formEl  = modalEl.querySelector('#confirmDeleteQuestaoForm');
+
+                if (labelEl) {
+                    labelEl.textContent = enunciado || '—';
+                }
+                if (formEl && questaoId) {
+                    formEl.setAttribute('action', '/app/catalogo/questoes/' + questaoId + '/excluir');
+                }
+            });
+        });
+        /*]]>*/
+    </script>
+
+
+
+
 </div>

@@ -1,29 +1,165 @@
 <div th:fragment="content">
-    <h2 class="h5 mb-3">Questão</h2>
-    <form th:action="@{/app/catalogo/questoes}" method="post" class="vstack gap-3">
-        <div>
-            <label class="form-label">Enunciado</label>
-            <textarea class="form-control" name="texto" rows="2" required></textarea>
+    <h2 class="h5 mb-3"
+        th:text="${isEdit} ? 'Editar Questão' : 'Nova Questão'">Questão</h2>
+
+    <form th:action="${isEdit} ? @{'/app/catalogo/questoes/' + ${questaoForm.id}} : @{/app/catalogo/questoes}"
+          th:object="${questaoForm}"
+          method="post"
+          class="card p-3">
+
+        <div class="row g-3">
+
+            <!-- Critério -->
+            <div class="col-md-6">
+                <label class="form-label" for="idCriterio">Critério</label>
+                <select id="idCriterio" class="form-select" th:field="*{idCriterio}" required>
+                    <option value="">Selecione...</option>
+                    <option th:each="c : ${criterios}"
+                            th:value="${c.idCriterio}"
+                            th:text="${c.nome}">Critério</option>
+                </select>
+            </div>
+
+            <!-- Tipo -->
+            <div class="col-md-3">
+                <label class="form-label" for="tipo">Tipo</label>
+                <select id="tipo" class="form-select" th:field="*{tipo}" required>
+                    <option value="LIKERT_5">Likert 1–5</option>
+                    <option value="BARS_5">BARS 1–5</option>
+                    <option value="OPEN">Texto (OPEN)</option>
+                    <option value="CHECK">Binário (CHECK)</option>
+                    <option value="NUM_0_10">Numérico 0–10</option>
+                </select>
+            </div>
+
+            <!-- Obrigatoriedade -->
+            <div class="col-md-3">
+                <label class="form-label" for="obrigatoriedade">Obrigatoriedade</label>
+                <select id="obrigatoriedade" class="form-select" th:field="*{obrigatoriedade}">
+                    <option value="OBRIGATORIA">Obrigatória</option>
+                    <option value="OPCIONAL">Opcional</option>
+                </select>
+            </div>
+
+            <!-- Enunciado -->
+            <div class="col-12">
+                <label class="form-label" for="enunciado">Enunciado</label>
+                <textarea id="enunciado" class="form-control" rows="2"
+                          th:field="*{enunciado}" required></textarea>
+            </div>
+
+            <!-- Validação numérica -->
+            <div class="col-md-3" id="groupValidacaoMin">
+                <label class="form-label" for="validacaoNumMin">Valor mínimo</label>
+                <input id="validacaoNumMin" type="number" step="0.001"
+                       class="form-control"
+                       th:field="*{validacaoNumMin}">
+            </div>
+            <div class="col-md-3" id="groupValidacaoMax">
+                <label class="form-label" for="validacaoNumMax">Valor máximo</label>
+                <input id="validacaoNumMax" type="number" step="0.001"
+                       class="form-control"
+                       th:field="*{validacaoNumMax}">
+            </div>
+
+            <!-- Tamanho texto -->
+            <div class="col-md-3" id="groupTamanhoTextoMax">
+                <label class="form-label" for="tamanhoTextoMax">Tamanho máximo do texto</label>
+                <input id="tamanhoTextoMax" type="number" min="1"
+                       class="form-control"
+                       th:field="*{tamanhoTextoMax}">
+            </div>
+
+            <!-- Ordem sugerida -->
+            <div class="col-md-3">
+                <label class="form-label" for="ordemSugerida">Ordem sugerida (no critério)</label>
+                <input id="ordemSugerida" type="number" min="1" class="form-control"
+                       th:field="*{ordemSugerida}">
+            </div>
+
+            <!-- Flags de privacidade / status -->
+            <div class="col-md-4">
+                <div class="form-check">
+                    <input id="sensivel" class="form-check-input" type="checkbox"
+                           th:field="*{sensivel}">
+                    <label class="form-check-label" for="sensivel">
+                        Questão sensível (texto nunca exibido a gestores; apenas agregados numéricos, se aplicável)
+                    </label>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="form-check">
+                    <input id="visivelParaGestor" class="form-check-input" type="checkbox"
+                           th:field="*{visivelParaGestor}">
+                    <label class="form-check-label" for="visivelParaGestor">
+                        Incluir resultados desta questão nos dashboards de gestores
+                        (quando não for sensível)
+                    </label>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="form-check">
+                    <input id="ativo" class="form-check-input" type="checkbox"
+                           th:field="*{ativo}">
+                    <label class="form-check-label" for="ativo">
+                        Ativa no catálogo
+                    </label>
+                </div>
+            </div>
+
         </div>
-        <div>
-            <label class="form-label">Critério</label>
-            <select class="form-select" name="criterio">
-                <option>Acolhimento</option>
-                <option>Segurança</option>
-                <option>Comunicação</option>
-            </select>
-        </div>
-        <div>
-            <label class="form-label">Tipo</label>
-            <select class="form-select" name="tipo">
-                <option>Numérico</option>
-                <option>Binário</option>
-                <option>Texto</option>
-            </select>
-        </div>
-        <div class="d-flex gap-2 mt-3">
-            <button class="btn btn-primary" type="submit">Salvar</button>
+
+        <div class="d-flex gap-2 mt-3 justify-content-end">
             <a class="btn btn-outline-secondary" th:href="@{/app/catalogo/questoes}">Cancelar</a>
+            <button class="btn btn-primary" type="submit">Salvar</button>
         </div>
     </form>
+
+    <!-- Script para ajustar campos conforme o tipo -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        function mmxAtualizarCamposPorTipo() {
+            var tipoSelect = document.getElementById('tipo');
+            if (!tipoSelect) return;
+
+            var tipo = tipoSelect.value;
+
+            var groupMin = document.getElementById('groupValidacaoMin');
+            var groupMax = document.getElementById('groupValidacaoMax');
+            var groupTxt = document.getElementById('groupTamanhoTextoMax');
+
+            var inputMin = document.getElementById('validacaoNumMin');
+            var inputMax = document.getElementById('validacaoNumMax');
+            var inputTxt = document.getElementById('tamanhoTextoMax');
+
+            var isNumerico = (tipo === 'LIKERT_5' || tipo === 'BARS_5' || tipo === 'NUM_0_10');
+            var isOpen = (tipo === 'OPEN');
+
+            if (groupMin && groupMax) {
+                groupMin.style.display = isNumerico ? '' : 'none';
+                groupMax.style.display = isNumerico ? '' : 'none';
+                if (!isNumerico) {
+                    if (inputMin) inputMin.value = '';
+                    if (inputMax) inputMax.value = '';
+                }
+            }
+
+            if (groupTxt) {
+                groupTxt.style.display = isOpen ? '' : 'none';
+                if (!isOpen && inputTxt) {
+                    inputTxt.value = '';
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var tipoSelect = document.getElementById('tipo');
+            if (!tipoSelect) return;
+            tipoSelect.addEventListener('change', mmxAtualizarCamposPorTipo);
+            mmxAtualizarCamposPorTipo();
+        });
+        /*]]>*/
+    </script>
 </div>

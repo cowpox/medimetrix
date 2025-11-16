@@ -91,5 +91,17 @@ public class QuestaoServiceImpl implements QuestaoService {
     }
 
     @Override public void activate(Long id) { dao.reactivate(id); }
-    @Override public void deactivate(Long id) { dao.deactivate(id); }
+    @Override
+    public boolean deactivate(Long id) {
+        if (!dao.hasUso(id)) {
+            // true = exclusão física
+            return dao.deleteById(id) > 0;
+        } else {
+            // false = apenas inativou
+            dao.deactivate(id);
+            return false;
+        }
+    }
+
+
 }

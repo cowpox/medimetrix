@@ -12,6 +12,7 @@ public interface QuestaoDao {
     List<Questao> listAtivasByTipo(String tipo, Integer offset, Integer limit);
     List<Questao> listByCriterio(Long idCriterio, Integer offset, Integer limit);
     List<Questao> searchByEnunciadoLikePaged(String termo, Integer offset, Integer limit);
+    boolean hasUso(Long idQuestao);
     int deactivate(Long id);
     int reactivate(Long id);
     int deleteById(Long id);

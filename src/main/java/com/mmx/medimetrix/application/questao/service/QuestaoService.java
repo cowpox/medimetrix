@@ -16,5 +16,5 @@ public interface QuestaoService {
     Optional<Questao> findById(Long id);
     List<Questao> list(QuestaoFiltro filtro);
     void activate(Long id);
-    void deactivate(Long id);
+    boolean deactivate(Long id);
 }
