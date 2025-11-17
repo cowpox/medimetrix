@@ -17,7 +17,12 @@ public interface AvaliacaoService {
     List<Avaliacao> listByStatus(String status, int page, int size);
     List<Avaliacao> searchByTituloLike(String termo, int page, int size);
 
-    void ativar(Long id);     // -> reactivate
-    void desativar(Long id);  // -> deactivate
+    void ativar(Long id);
+    void desativar(Long id);
     void delete(Long id);
+
+    // === Ciclo de vida ===
+    void publicar(Long id);  // RASCUNHO -> PUBLICADA (com validações)
+    void encerrar(Long id);  // PUBLICADA -> ENCERRADA
 }
+

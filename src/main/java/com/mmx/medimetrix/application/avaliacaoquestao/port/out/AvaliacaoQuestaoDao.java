@@ -13,4 +13,5 @@ public interface AvaliacaoQuestaoDao {
     int deleteOne(Long idAvaliacao, Long idQuestao);
     int deleteAllByAvaliacao(Long idAvaliacao);
     int swapOrdem(Long idAvaliacao, Long idQuestaoA, Long idQuestaoB); // utilitário para reordenar
+    int countByAvaliacao(Long idAvaliacao);
 }

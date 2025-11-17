@@ -16,4 +16,7 @@ public interface AvaliacaoQuestaoService {
     void deleteOne(Long idAvaliacao, Long idQuestao);
     void deleteAllByAvaliacao(Long idAvaliacao);
     void swapOrdem(Long idAvaliacao, Long idQuestaoA, Long idQuestaoB);
+    // === helpers adicionais ===
+    void addQuestaoAutoOrdem(Long idAvaliacao, Long idQuestao);
+    void renumerarOrdem(Long idAvaliacao);
 }

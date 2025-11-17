@@ -6,6 +6,8 @@ import com.mmx.medimetrix.application.avaliacao.exceptions.AvaliacaoEncerradaExc
 import com.mmx.medimetrix.application.avaliacao.exceptions.AvaliacaoJaPublicadaException;
 import com.mmx.medimetrix.application.avaliacao.exceptions.AvaliacaoNaoEncontradaException;
 import com.mmx.medimetrix.application.avaliacao.port.out.AvaliacaoDao;
+import com.mmx.medimetrix.application.avaliacaoquestao.port.out.AvaliacaoQuestaoDao;
+import com.mmx.medimetrix.application.participacao.port.out.ParticipacaoDao;
 import com.mmx.medimetrix.domain.core.Avaliacao;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,9 +20,15 @@ import java.util.Optional;
 public class AvaliacaoServiceImpl implements AvaliacaoService {
 
     private final AvaliacaoDao dao;
+    private final AvaliacaoQuestaoDao avaliacaoQuestaoDao;
+    private final ParticipacaoDao participacaoDao;
 
-    public AvaliacaoServiceImpl(AvaliacaoDao dao) {
+    public AvaliacaoServiceImpl(AvaliacaoDao dao,
+                                AvaliacaoQuestaoDao avaliacaoQuestaoDao,
+                                ParticipacaoDao participacaoDao) {
         this.dao = dao;
+        this.avaliacaoQuestaoDao = avaliacaoQuestaoDao;
+        this.participacaoDao = participacaoDao;
     }
 
     @Override
@@ -116,4 +124,67 @@ public class AvaliacaoServiceImpl implements AvaliacaoService {
         int rows = dao.deleteById(id);
         if (rows == 0) throw new AvaliacaoNaoEncontradaException();
     }
+
+    @Override
+    public void publicar(Long id) {
+        Avaliacao atual = dao.findById(id)
+                .orElseThrow(AvaliacaoNaoEncontradaException::new);
+
+        String status = atual.getStatus();
+
+        if ("PUBLICADA".equalsIgnoreCase(status)) {
+            throw new AvaliacaoJaPublicadaException();
+        }
+        if ("ENCERRADA".equalsIgnoreCase(status)) {
+            // opcional: exception específica
+            throw new AvaliacaoEncerradaException();
+        }
+
+        // Datas coerentes antes de publicar
+        if (atual.getDataInicioAplic() != null && atual.getDataFimAplic() != null
+                && atual.getDataInicioAplic().isAfter(atual.getDataFimAplic())) {
+            throw new IllegalArgumentException("DATA_INICIO_APLIC deve ser ≤ DATA_FIM_APLIC.");
+        }
+
+        // (a) precisa ter pelo menos 1 questão na avaliação
+        int totalQuestoes = avaliacaoQuestaoDao.countByAvaliacao(id);
+        if (totalQuestoes == 0) {
+            throw new IllegalStateException("A avaliação precisa ter ao menos uma questão para ser publicada.");
+            // se quiser, depois troca por AvaliacaoJaPublicadaException ou outra específica
+        }
+
+        // (b) precisa ter participações geradas
+        int totalParticipacoes = participacaoDao.countByAvaliacao(id);
+        if (totalParticipacoes == 0) {
+            throw new IllegalStateException("Gere as participações antes de publicar a avaliação.");
+        }
+
+        atual.setStatus("PUBLICADA");
+        int rows = dao.update(atual);
+        if (rows == 0) throw new AvaliacaoNaoEncontradaException();
+    }
+
+    @Override
+    public void encerrar(Long id) {
+        Avaliacao atual = dao.findById(id)
+                .orElseThrow(AvaliacaoNaoEncontradaException::new);
+
+        String status = atual.getStatus();
+
+        if ("ENCERRADA".equalsIgnoreCase(status)) {
+            // já está encerrada – pode silenciosamente retornar ou lançar exception
+            throw new AvaliacaoEncerradaException();
+        }
+        if (!"PUBLICADA".equalsIgnoreCase(status)) {
+            // regra de negócio: só se encerra algo PUBLICADA
+            throw new IllegalStateException("A avaliação só pode ser encerrada a partir do status PUBLICADA.");
+        }
+
+        atual.setStatus("ENCERRADA");
+        int rows = dao.update(atual);
+        if (rows == 0) throw new AvaliacaoNaoEncontradaException();
+
+        // Se quiser, depois: aqui é o ponto para travar novas respostas na camada de aplicação.
+    }
+
 }

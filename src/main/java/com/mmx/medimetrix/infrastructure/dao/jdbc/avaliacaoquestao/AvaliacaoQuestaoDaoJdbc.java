@@ -119,6 +119,18 @@ public class AvaliacaoQuestaoDaoJdbc implements AvaliacaoQuestaoDao {
         return r1 + r2 + r3; // esperado: 3
     }
 
+    @Override
+    public int countByAvaliacao(Long idAvaliacao) {
+        final String sql = """
+        SELECT COUNT(*) 
+        FROM medimetrix.avaliacao_questao
+        WHERE id_avaliacao = ?
+        """;
+        Integer count = jdbc.queryForObject(sql, Integer.class, idAvaliacao);
+        return count != null ? count : 0;
+    }
+
+
 
 
 }

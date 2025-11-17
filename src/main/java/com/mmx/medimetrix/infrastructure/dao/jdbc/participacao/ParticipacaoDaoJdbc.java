@@ -95,4 +95,16 @@ public class ParticipacaoDaoJdbc implements ParticipacaoDao {
         final String sql = "DELETE FROM MEDIMETRIX.PARTICIPACAO WHERE ID_PARTICIPACAO = ?";
         return jdbc.update(sql, idParticipacao);
     }
+
+    @Override
+    public int countByAvaliacao(Long idAvaliacao) {
+        final String sql = """
+        SELECT COUNT(*) 
+        FROM medimetrix.participacao
+        WHERE id_avaliacao = ?
+        """;
+        Integer count = jdbc.queryForObject(sql, Integer.class, idAvaliacao);
+        return count != null ? count : 0;
+    }
+
 }

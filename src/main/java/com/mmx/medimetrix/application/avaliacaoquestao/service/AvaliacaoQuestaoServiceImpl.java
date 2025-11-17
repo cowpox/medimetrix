@@ -92,4 +92,39 @@ public class AvaliacaoQuestaoServiceImpl implements AvaliacaoQuestaoService {
         }
     }
 
+    @Override
+    public void addQuestaoAutoOrdem(Long idAvaliacao, Long idQuestao) {
+        // pega a maior ordem atual e adiciona +1
+        List<AvaliacaoQuestao> existentes = dao.listByAvaliacao(idAvaliacao);
+        int proximaOrdem = existentes.stream()
+                .map(AvaliacaoQuestao::getOrdem)
+                .filter(o -> o != null && o > 0)
+                .max(Integer::compareTo)
+                .orElse(0) + 1;
+
+        AvaliacaoQuestaoCreate cmd = new AvaliacaoQuestaoCreate();
+        cmd.setIdQuestao(idQuestao);
+        cmd.setOrdem(proximaOrdem);
+        cmd.setAtivaNaAval(Boolean.TRUE);
+
+        addQuestao(idAvaliacao, cmd);
+    }
+
+    @Override
+    public void renumerarOrdem(Long idAvaliacao) {
+        List<AvaliacaoQuestao> lista = dao.listByAvaliacao(idAvaliacao);
+
+        // idealmente o DAO já devolve ordenado por ordem; se não, ordena aqui:
+        lista.sort((a, b) -> Integer.compare(
+                a.getOrdem() != null ? a.getOrdem() : Integer.MAX_VALUE,
+                b.getOrdem() != null ? b.getOrdem() : Integer.MAX_VALUE
+        ));
+
+        int ordem = 1;
+        for (AvaliacaoQuestao aq : lista) {
+            aq.setOrdem(ordem++);
+            dao.update(aq);
+        }
+    }
+
 }

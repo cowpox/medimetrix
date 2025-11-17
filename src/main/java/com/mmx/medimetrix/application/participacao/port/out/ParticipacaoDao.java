@@ -17,4 +17,5 @@ public interface ParticipacaoDao {
     int touchActivity(Long idParticipacao);     // LAST_ACTIVITY_AT = now
     int markSubmitted(Long idParticipacao);     // STATUS = RESPONDIDA, SUBMITTED_AT = now
     int deleteById(Long idParticipacao);
+    int countByAvaliacao(Long idAvaliacao);
 }
