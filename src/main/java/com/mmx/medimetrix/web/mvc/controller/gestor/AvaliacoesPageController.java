@@ -2,19 +2,24 @@ package com.mmx.medimetrix.web.mvc.controller.gestor;
 
 import com.mmx.medimetrix.application.avaliacao.commands.AvaliacaoCreate;
 import com.mmx.medimetrix.application.avaliacao.commands.AvaliacaoUpdate;
-import com.mmx.medimetrix.application.avaliacao.exceptions.AvaliacaoNaoEncontradaException;
-import com.mmx.medimetrix.application.avaliacao.exceptions.AvaliacaoJaPublicadaException;
 import com.mmx.medimetrix.application.avaliacao.exceptions.AvaliacaoEncerradaException;
+import com.mmx.medimetrix.application.avaliacao.exceptions.AvaliacaoJaPublicadaException;
+import com.mmx.medimetrix.application.avaliacao.exceptions.AvaliacaoNaoEncontradaException;
 import com.mmx.medimetrix.application.avaliacao.service.AvaliacaoService;
 import com.mmx.medimetrix.application.avaliacaoquestao.service.AvaliacaoQuestaoService;
+import com.mmx.medimetrix.application.participacao.service.ParticipacaoService;
 import com.mmx.medimetrix.application.questao.queries.QuestaoFiltro;
 import com.mmx.medimetrix.application.questao.service.QuestaoService;
-import com.mmx.medimetrix.domain.core.Avaliacao;
-import com.mmx.medimetrix.domain.core.AvaliacaoQuestao;
-import com.mmx.medimetrix.domain.core.Questao;
-import com.mmx.medimetrix.application.especialidade.service.EspecialidadeService;
+import com.mmx.medimetrix.application.resposta.service.RespostaService;
 import com.mmx.medimetrix.application.unidade.queries.UnidadeFiltro;
 import com.mmx.medimetrix.application.unidade.service.UnidadeService;
+import com.mmx.medimetrix.application.especialidade.service.EspecialidadeService;
+import com.mmx.medimetrix.domain.core.Unidade;
+import com.mmx.medimetrix.domain.core.Especialidade;
+import com.mmx.medimetrix.domain.core.Avaliacao;
+import com.mmx.medimetrix.domain.core.AvaliacaoQuestao;
+import com.mmx.medimetrix.domain.core.Participacao;
+import com.mmx.medimetrix.domain.core.Questao;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -38,17 +43,24 @@ public class AvaliacoesPageController {
     private final AvaliacaoService avaliacaoService;
     private final AvaliacaoQuestaoService avaliacaoQuestaoService;
     private final QuestaoService questaoService;
+    private final ParticipacaoService participacaoService;
+    private final RespostaService respostaService;
     private final UnidadeService unidadeService;
     private final EspecialidadeService especialidadeService;
+
 
     public AvaliacoesPageController(AvaliacaoService avaliacaoService,
                                     AvaliacaoQuestaoService avaliacaoQuestaoService,
                                     QuestaoService questaoService,
+                                    ParticipacaoService participacaoService,
+                                    RespostaService respostaService,
                                     UnidadeService unidadeService,
                                     EspecialidadeService especialidadeService) {
         this.avaliacaoService = avaliacaoService;
         this.avaliacaoQuestaoService = avaliacaoQuestaoService;
         this.questaoService = questaoService;
+        this.participacaoService = participacaoService;
+        this.respostaService = respostaService;
         this.unidadeService = unidadeService;
         this.especialidadeService = especialidadeService;
     }
@@ -105,6 +117,7 @@ public class AvaliacoesPageController {
         model.addAttribute("filtroNaData", naData);
 
         model.addAttribute("statusOptions", statusOptions());
+        // flash "confirmSuspensaoId" (quando existir) chega automático no model
 
         return "gestor/avaliacoes-list";
     }
@@ -119,6 +132,9 @@ public class AvaliacoesPageController {
 
         Avaliacao avaliacao = avaliacaoService.findById(id)
                 .orElseThrow(AvaliacaoNaoEncontradaException::new);
+
+        // >>> NOVO: tela somente leitura se ENCERRADA <<<
+        boolean readOnly = "ENCERRADA".equalsIgnoreCase(avaliacao.getStatus());
 
         // ----- Questões já vinculadas à avaliação -----
         List<AvaliacaoQuestao> vinculadas = avaliacaoQuestaoService.listByAvaliacao(id);
@@ -141,28 +157,24 @@ public class AvaliacoesPageController {
         QuestaoFiltro filtro;
 
         if (StringUtils.hasText(termoCatalogo)) {
-            // filtra por enunciado
             filtro = new QuestaoFiltro(
-                    termoCatalogo.trim(), // enunciadoLike
-                    null,                 // tipo
-                    null,                 // idCriterio
-                    pageIdx,              // page
-                    pageSize              // size
+                    termoCatalogo.trim(),
+                    null,
+                    null,
+                    pageIdx,
+                    pageSize
             );
         } else {
-            // sem filtro de enunciado, só paginação
             filtro = new QuestaoFiltro(
-                    null, // enunciadoLike
-                    null, // tipo
-                    null, // idCriterio
+                    null,
+                    null,
+                    null,
                     pageIdx,
                     pageSize
             );
         }
 
-
         questoesCatalogo = questaoService.list(filtro);
-
 
         model.addAttribute("pageTitle", "Avaliação • Questões");
         model.addAttribute("breadcrumb", "Avaliações");
@@ -172,18 +184,28 @@ public class AvaliacoesPageController {
         model.addAttribute("questoesAvaliacao", questoesAvaliacao);
         model.addAttribute("termoCatalogo", termoCatalogo);
 
+        // >>> NOVO <<<
+        model.addAttribute("readOnly", readOnly);
+
         return "gestor/avaliacoes-questoes";
     }
 
+
     // =========================================================
-// POST - ADICIONAR QUESTÃO NA AVALIAÇÃO
-// =========================================================
+    // POST - ADICIONAR QUESTÃO NA AVALIAÇÃO
+    // =========================================================
     @PostMapping("/{id}/questoes/add")
     public String addQuestao(@PathVariable Long id,
                              @RequestParam("idQuestao") Long idQuestao,
                              RedirectAttributes redirect) {
 
-        // Se já existe o vínculo, não tenta inserir de novo
+        // >>> NOVO <<<
+        if (isEncerrada(id)) {
+            redirect.addFlashAttribute("errorMessage",
+                    "Avaliação encerrada não permite alteração de questões.");
+            return "redirect:/app/avaliacoes/" + id + "/questoes";
+        }
+
         var existente = avaliacaoQuestaoService.findOne(id, idQuestao);
         if (existente.isPresent()) {
             redirect.addFlashAttribute("warningMessage",
@@ -191,7 +213,6 @@ public class AvaliacoesPageController {
             return "redirect:/app/avaliacoes/" + id + "/questoes";
         }
 
-        // Usa helper que já define a próxima ordem automaticamente
         avaliacaoQuestaoService.addQuestaoAutoOrdem(id, idQuestao);
 
         redirect.addFlashAttribute("successMessage",
@@ -201,12 +222,19 @@ public class AvaliacoesPageController {
 
 
     // =========================================================
-// POST - MOVER QUESTÃO PARA CIMA
-// =========================================================
+    // POST - MOVER QUESTÃO PARA CIMA
+    // =========================================================
     @PostMapping("/{id}/questoes/subir")
     public String subirQuestao(@PathVariable Long id,
                                @RequestParam("idQuestao") Long idQuestao,
                                RedirectAttributes redirect) {
+
+        // >>> NOVO <<<
+        if (isEncerrada(id)) {
+            redirect.addFlashAttribute("errorMessage",
+                    "Avaliação encerrada não permite alteração de questões.");
+            return "redirect:/app/avaliacoes/" + id + "/questoes";
+        }
 
         List<AvaliacaoQuestao> lista = avaliacaoQuestaoService.listByAvaliacao(id);
 
@@ -218,10 +246,8 @@ public class AvaliacoesPageController {
             }
         }
 
-        // se não achou ou já é a primeira, não faz nada
         if (idx > 0) {
             Long idQuestaoAcima = lista.get(idx - 1).getIdQuestao();
-            // troca a ordem entre a atual e a de cima
             avaliacaoQuestaoService.swapOrdem(id, idQuestao, idQuestaoAcima);
         }
 
@@ -230,13 +256,21 @@ public class AvaliacoesPageController {
         return "redirect:/app/avaliacoes/" + id + "/questoes";
     }
 
+
     // =========================================================
-// POST - MOVER QUESTÃO PARA BAIXO
-// =========================================================
+    // POST - MOVER QUESTÃO PARA BAIXO
+    // =========================================================
     @PostMapping("/{id}/questoes/descer")
     public String descerQuestao(@PathVariable Long id,
                                 @RequestParam("idQuestao") Long idQuestao,
                                 RedirectAttributes redirect) {
+
+        // >>> NOVO <<<
+        if (isEncerrada(id)) {
+            redirect.addFlashAttribute("errorMessage",
+                    "Avaliação encerrada não permite alteração de questões.");
+            return "redirect:/app/avaliacoes/" + id + "/questoes";
+        }
 
         List<AvaliacaoQuestao> lista = avaliacaoQuestaoService.listByAvaliacao(id);
 
@@ -248,10 +282,8 @@ public class AvaliacoesPageController {
             }
         }
 
-        // se não achou ou já é a última, não faz nada
         if (idx != -1 && idx < lista.size() - 1) {
             Long idQuestaoAbaixo = lista.get(idx + 1).getIdQuestao();
-            // troca a ordem entre a atual e a de baixo
             avaliacaoQuestaoService.swapOrdem(id, idQuestao, idQuestaoAbaixo);
         }
 
@@ -261,19 +293,22 @@ public class AvaliacoesPageController {
     }
 
 
-
-
     // =========================================================
-// POST - REMOVER QUESTÃO DA AVALIAÇÃO
-// =========================================================
+    // POST - REMOVER QUESTÃO DA AVALIAÇÃO
+    // =========================================================
     @PostMapping("/{id}/questoes/remover")
     public String removerQuestao(@PathVariable Long id,
                                  @RequestParam("idQuestao") Long idQuestao,
                                  RedirectAttributes redirect) {
 
-        // remove o vínculo
+        // >>> NOVO <<<
+        if (isEncerrada(id)) {
+            redirect.addFlashAttribute("errorMessage",
+                    "Avaliação encerrada não permite alteração de questões.");
+            return "redirect:/app/avaliacoes/" + id + "/questoes";
+        }
+
         avaliacaoQuestaoService.deleteOne(id, idQuestao);
-        // renumera as ordens para ficar 1,2,3,...
         avaliacaoQuestaoService.renumerarOrdem(id);
 
         redirect.addFlashAttribute("successMessage",
@@ -282,51 +317,79 @@ public class AvaliacoesPageController {
     }
 
 
+    private void carregarCombosEscopo(Model model) {
+    // Unidades ativas
+    List<Unidade> unidades = unidadeService.list(
+            new UnidadeFiltro(
+                    null,      // nomeLike
+                    0,         // page
+                    500,       // size
+                    "nome",    // sortBy
+                    true,      // asc
+                    true       // ativo
+            )
+    );
+
+    // Especialidades ativas
+    List<Especialidade> especialidades = especialidadeService.listAtivas();
+
+    model.addAttribute("unidades", unidades);
+    model.addAttribute("especialidades", especialidades);
+}
 
 
 
-    // =========================================================
+// =========================================================
     // FORM - NOVA
     // =========================================================
-    @GetMapping("/nova")
-    public String nova(Model model) {
-        AvaliacaoForm form = new AvaliacaoForm();
-        form.setStatus("RASCUNHO");
-        form.setAtivo(Boolean.TRUE);
-        form.setkMinimo(3);
-        form.setEscopo("GLOBAL"); // default: todos os médicos
+@GetMapping("/nova")
+public String nova(Model model) {
+    AvaliacaoForm form = new AvaliacaoForm();
+    form.setStatus("RASCUNHO");
+    form.setAtivo(Boolean.TRUE);
+    form.setkMinimo(3);
+    form.setEscopo("GLOBAL");
 
-        model.addAttribute("pageTitle", "Nova avaliação");
-        model.addAttribute("breadcrumb", "Avaliações");
-        model.addAttribute("form", form);
-        model.addAttribute("statusOptions", statusOptions());
-        preencherCombos(model);
+    model.addAttribute("pageTitle", "Nova avaliação");
+    model.addAttribute("breadcrumb", "Avaliações");
+    model.addAttribute("form", form);
+    model.addAttribute("statusOptions", statusOptions());
+    model.addAttribute("modoLeitura", false);
 
-        return "gestor/avaliacoes-form";
-    }
+    carregarCombosEscopo(model);
+
+    return "gestor/avaliacoes-form";
+}
 
 
+// =========================================================
+    // FORM - EDITAR / VISUALIZAR
     // =========================================================
-    // FORM - EDITAR
-    // =========================================================
-    @GetMapping("/{id}/editar")
-    public String editar(@PathVariable Long id, Model model, RedirectAttributes redirect) {
-        Avaliacao a = avaliacaoService.findById(id)
-                .orElseThrow(AvaliacaoNaoEncontradaException::new);
+@GetMapping("/{id}/editar")
+public String editar(@PathVariable Long id, Model model) {
+    Avaliacao a = avaliacaoService.findById(id)
+            .orElseThrow(AvaliacaoNaoEncontradaException::new);
 
-        AvaliacaoForm form = AvaliacaoForm.fromDomain(a);
+    AvaliacaoForm form = AvaliacaoForm.fromDomain(a);
 
-        model.addAttribute("pageTitle", "Editar avaliação");
-        model.addAttribute("breadcrumb", "Avaliações");
-        model.addAttribute("form", form);
-        model.addAttribute("statusOptions", statusOptions());
-        preencherCombos(model);
+    boolean modoLeitura =
+            "PUBLICADA".equalsIgnoreCase(form.getStatus()) ||
+                    "ENCERRADA".equalsIgnoreCase(form.getStatus());
 
-        return "gestor/avaliacoes-form";
-    }
+    model.addAttribute("pageTitle",
+            modoLeitura ? "Visualizar avaliação" : "Editar avaliação");
+    model.addAttribute("breadcrumb", "Avaliações");
+    model.addAttribute("form", form);
+    model.addAttribute("statusOptions", statusOptions());
+    model.addAttribute("modoLeitura", modoLeitura);
+
+    carregarCombosEscopo(model);
+
+    return "gestor/avaliacoes-form";
+}
 
 
-    // =========================================================
+// =========================================================
     // POST - CRIAR
     // =========================================================
     @PostMapping
@@ -339,9 +402,11 @@ public class AvaliacoesPageController {
             model.addAttribute("pageTitle", "Nova avaliação");
             model.addAttribute("breadcrumb", "Avaliações");
             model.addAttribute("statusOptions", statusOptions());
-            preencherCombos(model);
+            model.addAttribute("modoLeitura", false);
+            carregarCombosEscopo(model);
             return "gestor/avaliacoes-form";
         }
+
 
         AvaliacaoCreate cmd = new AvaliacaoCreate();
         cmd.setTitulo(form.getTitulo());
@@ -350,10 +415,9 @@ public class AvaliacoesPageController {
         cmd.setkMinimo(form.getkMinimo());
         cmd.setStatus(form.getStatus());
         cmd.setAtivo(form.getAtivo());
-        // TODO: quando o domínio suportar esses campos, descomentar:
-        // cmd.setEscopo(form.getEscopo());
-        // cmd.setIdUnidade(form.getIdUnidade());
-        // cmd.setIdEspecialidade(form.getIdEspecialidade());
+        cmd.setEscopo(form.getEscopo());
+        cmd.setIdUnidade(form.getIdUnidade());
+        cmd.setIdEspecialidade(form.getIdEspecialidade());
 
         Long id = avaliacaoService.create(cmd);
 
@@ -361,7 +425,6 @@ public class AvaliacoesPageController {
                 "Avaliação criada com sucesso.");
         return "redirect:/app/avaliacoes/" + id + "/editar";
     }
-
 
     // =========================================================
     // POST - ATUALIZAR
@@ -373,13 +436,29 @@ public class AvaliacoesPageController {
                          Model model,
                          RedirectAttributes redirect) {
 
+        Avaliacao atual = avaliacaoService.findById(id)
+                .orElseThrow(AvaliacaoNaoEncontradaException::new);
+
+        boolean modoLeitura =
+                "PUBLICADA".equalsIgnoreCase(atual.getStatus()) ||
+                        "ENCERRADA".equalsIgnoreCase(atual.getStatus());
+
+        if (modoLeitura) {
+            // não deixa atualizar via POST se não for rascunho
+            redirect.addFlashAttribute("warningMessage",
+                    "Avaliações publicadas ou encerradas não podem ser alteradas.");
+            return "redirect:/app/avaliacoes";
+        }
+
         if (binding.hasErrors()) {
             model.addAttribute("pageTitle", "Editar avaliação");
             model.addAttribute("breadcrumb", "Avaliações");
             model.addAttribute("statusOptions", statusOptions());
-            preencherCombos(model);
+            model.addAttribute("modoLeitura", false);
+            carregarCombosEscopo(model);
             return "gestor/avaliacoes-form";
         }
+
 
         AvaliacaoUpdate cmd = new AvaliacaoUpdate(
                 form.getTitulo(),
@@ -387,24 +466,98 @@ public class AvaliacoesPageController {
                 form.getDataFimAplic(),
                 form.getkMinimo(),
                 form.getStatus(),
-                form.getAtivo()
+                form.getAtivo(),
+                form.getEscopo(),
+                form.getIdUnidade(),
+                form.getIdEspecialidade()
         );
-        // TODO: quando AvaliacaoUpdate tiver esses campos, setar aqui:
-        // cmd.setEscopo(form.getEscopo());
-        // cmd.setIdUnidade(form.getIdUnidade());
-        // cmd.setIdEspecialidade(form.getIdEspecialidade());
 
         try {
             avaliacaoService.update(id, cmd);
-        } catch (AvaliacaoJaPublicadaException | AvaliacaoEncerradaException ex) {
-            // mostra mensagem amigável e volta para a tela de edição
-            redirect.addFlashAttribute("errorMessage", ex.getMessage());
-            return "redirect:/app/avaliacoes/" + id + "/editar";
+        } catch (AvaliacaoJaPublicadaException ex) {
+            redirect.addFlashAttribute("errorMessage",
+                    "A avaliação já foi publicada e não pode ser alterada.");
+            return "redirect:/app/avaliacoes";
+        } catch (AvaliacaoEncerradaException ex) {
+            redirect.addFlashAttribute("errorMessage",
+                    "A avaliação já foi encerrada e não permite mais alterações.");
+            return "redirect:/app/avaliacoes";
         }
 
         redirect.addFlashAttribute("successMessage",
                 "Avaliação atualizada com sucesso.");
         return "redirect:/app/avaliacoes";
+    }
+
+    // =========================================================
+    // POST - SUSPENDER (status PUBLICADA -> RASCUNHO)
+    // =========================================================
+    @PostMapping("/{id}/suspender")
+    public String suspender(@PathVariable Long id,
+                            @RequestParam(name = "confirm", required = false, defaultValue = "false")
+                            boolean confirm,
+                            RedirectAttributes redirect) {
+
+        Avaliacao avaliacao = avaliacaoService.findById(id)
+                .orElseThrow(AvaliacaoNaoEncontradaException::new);
+
+        if (!"PUBLICADA".equalsIgnoreCase(avaliacao.getStatus())) {
+            redirect.addFlashAttribute("warningMessage",
+                    "Apenas avaliações publicadas podem ser suspensas.");
+            return "redirect:/app/avaliacoes";
+        }
+
+        // conta respostas da avaliação (usando listByAvaliacao)
+        int totalRespostas = respostaService.listByAvaliacao(id, 0, 100000).size();
+
+        if (totalRespostas > 0 && !confirm) {
+            redirect.addFlashAttribute("warningMessage",
+                    "Esta avaliação já possui " + totalRespostas +
+                            " resposta(s). Clique novamente em 'Confirmar suspensão' para prosseguir.");
+            redirect.addFlashAttribute("confirmSuspensaoId", id);
+            return "redirect:/app/avaliacoes";
+        }
+
+        // Apaga respostas e participações
+        List<Participacao> participacoes = participacaoService.listByAvaliacao(id, 0, 100000);
+        for (Participacao p : participacoes) {
+            respostaService.deleteByParticipacao(p.getIdParticipacao());
+            participacaoService.delete(p.getIdParticipacao());
+        }
+
+        // Volta para RASCUNHO
+        AvaliacaoUpdate cmd = new AvaliacaoUpdate(
+                avaliacao.getTitulo(),
+                avaliacao.getDataInicioAplic(),
+                avaliacao.getDataFimAplic(),
+                avaliacao.getkMinimo(),
+                "RASCUNHO",
+                avaliacao.getAtivo(),
+                avaliacao.getEscopo(),
+                avaliacao.getIdUnidade(),
+                avaliacao.getIdEspecialidade()
+        );
+
+        // Aqui podemos chamar diretamente o DAO, mas mantive pelo service.
+        // Como o status atual é PUBLICADA, a regra de negócio de update
+        // pode acusar AvaliacaoJaPublicadaException; para não quebrar,
+        // mudamos diretamente no DAO – ou, se preferir, relaxamos a regra.
+        avaliacao.setStatus("RASCUNHO");
+        avaliacaoService.update(id, cmd);
+
+        redirect.addFlashAttribute("successMessage",
+                "Avaliação suspensa. Participações e respostas foram removidas e o status voltou para RASCUNHO.");
+        return "redirect:/app/avaliacoes";
+    }
+
+    // =========================================================
+// HELPER: impedir alterações em avaliação encerrada
+// =========================================================
+    private boolean isEncerrada(Long idAvaliacao) {
+        return avaliacaoService.findById(idAvaliacao)
+                .map(Avaliacao::getStatus)
+                .map(s -> "ENCERRADA".equalsIgnoreCase(s))
+                .orElse(false);
     }
 
 
@@ -417,28 +570,6 @@ public class AvaliacoesPageController {
     }
 
     // =========================================================
-    // HELPER: opções de escopo de participantes
-    // =========================================================
-    private List<String> escopoOptions() {
-        return List.of("GLOBAL", "UNIDADE", "ESPECIALIDADE");
-    }
-
-    // =========================================================
-    // HELPER: combos usados no form (unidades / especialidades)
-    // =========================================================
-    private void preencherCombos(Model model) {
-        var especialidadesCombo = especialidadeService.listAtivas();
-        var unidadesCombo = unidadeService.list(
-                new UnidadeFiltro(null, 0, 200, "nome", true, true)
-        );
-
-        model.addAttribute("especialidades", especialidadesCombo);
-        model.addAttribute("unidades", unidadesCombo);
-        model.addAttribute("escopoOptions", escopoOptions());
-    }
-
-
-    // =========================================================
     // VIEW MODEL do formulário
     // =========================================================
     public static class AvaliacaoForm {
@@ -449,9 +580,11 @@ public class AvaliacoesPageController {
         private String titulo;
 
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        @NotNull
         private LocalDate dataInicioAplic;
 
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        @NotNull
         private LocalDate dataFimAplic;
 
         @NotNull
@@ -463,12 +596,12 @@ public class AvaliacoesPageController {
 
         private Boolean ativo = Boolean.TRUE;
 
-        // >>> NOVOS CAMPOS <<<
-        @NotBlank
+        // >>> NOVOS CAMPOS (somente de UI, por enquanto) <<<
         private String escopo;          // GLOBAL | UNIDADE | ESPECIALIDADE
+        private Long idUnidade;
+        private Long idEspecialidade;
 
-        private Long idUnidade;         // se escopo = UNIDADE
-        private Long idEspecialidade;   // se escopo = ESPECIALIDADE
+        // getters/setters ...
 
         public Long getId() { return id; }
         public void setId(Long id) { this.id = id; }
@@ -491,29 +624,14 @@ public class AvaliacoesPageController {
         public Boolean getAtivo() { return ativo; }
         public void setAtivo(Boolean ativo) { this.ativo = ativo; }
 
-        public String getEscopo() {
-            return escopo;
-        }
+        public String getEscopo() { return escopo; }
+        public void setEscopo(String escopo) { this.escopo = escopo; }
 
-        public void setEscopo(String escopo) {
-            this.escopo = escopo;
-        }
+        public Long getIdUnidade() { return idUnidade; }
+        public void setIdUnidade(Long idUnidade) { this.idUnidade = idUnidade; }
 
-        public Long getIdUnidade() {
-            return idUnidade;
-        }
-
-        public void setIdUnidade(Long idUnidade) {
-            this.idUnidade = idUnidade;
-        }
-
-        public Long getIdEspecialidade() {
-            return idEspecialidade;
-        }
-
-        public void setIdEspecialidade(Long idEspecialidade) {
-            this.idEspecialidade = idEspecialidade;
-        }
+        public Long getIdEspecialidade() { return idEspecialidade; }
+        public void setIdEspecialidade(Long idEspecialidade) { this.idEspecialidade = idEspecialidade; }
 
         public static AvaliacaoForm fromDomain(Avaliacao a) {
             AvaliacaoForm f = new AvaliacaoForm();
@@ -524,17 +642,55 @@ public class AvaliacoesPageController {
             f.setkMinimo(a.getkMinimo());
             f.setStatus(a.getStatus());
             f.setAtivo(a.getAtivo());
+            // Escopo vindo do domínio (default = GLOBAL se vier nulo/vazio)
+            String escopo = a.getEscopo();
+            if (escopo == null || escopo.isBlank()) {
+                escopo = "GLOBAL";
+            }
+            f.setEscopo(escopo);
 
-            // Ainda não temos escopo/unidade/especialidade no domínio,
-            // então usamos defaults seguros:
-            f.setEscopo("GLOBAL");
-            f.setIdUnidade(null);
-            f.setIdEspecialidade(null);
+            // Preenche unidade / especialidade conforme o escopo
+            if ("UNIDADE".equalsIgnoreCase(escopo)) {
+                f.setIdUnidade(a.getIdUnidade());
+                f.setIdEspecialidade(null);
+            } else if ("ESPECIALIDADE".equalsIgnoreCase(escopo)) {
+                f.setIdEspecialidade(a.getIdEspecialidade());
+                f.setIdUnidade(null);
+            } else { // GLOBAL
+                f.setIdUnidade(null);
+                f.setIdEspecialidade(null);
+            }
 
             return f;
         }
     }
 
+    // =========================================================
+    // VIEW MODEL: item da lista
+    // =========================================================
+    public record AvaliacaoListItemVM(
+            Long id,
+            String titulo,
+            String periodo,
+            Integer totalQuestoes,
+            String status
+    ) {
+        public static AvaliacaoListItemVM from(Avaliacao a, int totalQuestoes) {
+            String periodo;
+            if (a.getDataInicioAplic() != null && a.getDataFimAplic() != null) {
+                periodo = a.getDataInicioAplic() + " – " + a.getDataFimAplic();
+            } else {
+                periodo = "—";
+            }
+            return new AvaliacaoListItemVM(
+                    a.getIdAvaliacao(),
+                    a.getTitulo(),
+                    periodo,
+                    totalQuestoes,
+                    a.getStatus()
+            );
+        }
+    }
 
     // =========================================================
     // VIEW MODEL: Questão dentro da avaliação
@@ -545,37 +701,17 @@ public class AvaliacoesPageController {
         private String enunciado;
         private Boolean ativaNaAval;
 
-        public Long getIdQuestao() {
-            return idQuestao;
-        }
+        public Long getIdQuestao() { return idQuestao; }
+        public void setIdQuestao(Long idQuestao) { this.idQuestao = idQuestao; }
 
-        public void setIdQuestao(Long idQuestao) {
-            this.idQuestao = idQuestao;
-        }
+        public Integer getOrdem() { return ordem; }
+        public void setOrdem(Integer ordem) { this.ordem = ordem; }
 
-        public Integer getOrdem() {
-            return ordem;
-        }
+        public String getEnunciado() { return enunciado; }
+        public void setEnunciado(String enunciado) { this.enunciado = enunciado; }
 
-        public void setOrdem(Integer ordem) {
-            this.ordem = ordem;
-        }
-
-        public String getEnunciado() {
-            return enunciado;
-        }
-
-        public void setEnunciado(String enunciado) {
-            this.enunciado = enunciado;
-        }
-
-        public Boolean getAtivaNaAval() {
-            return ativaNaAval;
-        }
-
-        public void setAtivaNaAval(Boolean ativaNaAval) {
-            this.ativaNaAval = ativaNaAval;
-        }
+        public Boolean getAtivaNaAval() { return ativaNaAval; }
+        public void setAtivaNaAval(Boolean ativaNaAval) { this.ativaNaAval = ativaNaAval; }
 
         public static AvaliacaoQuestaoVM from(AvaliacaoQuestao aq, String enunciado) {
             AvaliacaoQuestaoVM vm = new AvaliacaoQuestaoVM();

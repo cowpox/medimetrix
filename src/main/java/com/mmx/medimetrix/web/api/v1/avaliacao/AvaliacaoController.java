@@ -51,6 +51,7 @@ public class AvaliacaoController {
                 dto.getkMinimo(),
                 dto.getStatus(),
                 dto.getAtivo()
+
         ));
         return ResponseEntity.noContent().build();
     }

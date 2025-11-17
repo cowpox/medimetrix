@@ -20,6 +20,9 @@ public class AvaliacaoRowMapper implements RowMapper<Avaliacao> {
         a.setVersao(rs.getInt("VERSAO"));
         a.setDataCriacao(rs.getTimestamp("DATA_CRIACAO") != null ? rs.getTimestamp("DATA_CRIACAO").toLocalDateTime() : null);
         a.setDataUltimaEdicao(rs.getTimestamp("DATA_ULTIMA_EDICAO") != null ? rs.getTimestamp("DATA_ULTIMA_EDICAO").toLocalDateTime() : null);
+        a.setEscopo(rs.getString("ESCOPO"));
+        a.setIdUnidade((Long) rs.getObject("ID_UNIDADE"));
+        a.setIdEspecialidade((Long) rs.getObject("ID_ESPECIALIDADE"));
         return a;
     }
 }

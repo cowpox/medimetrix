@@ -33,6 +33,7 @@ public class AvaliacaoServiceImpl implements AvaliacaoService {
 
     @Override
     public Long create(AvaliacaoCreate cmd) {
+
         Avaliacao a = new Avaliacao();
         a.setTitulo(cmd.getTitulo());
         a.setDataInicioAplic(cmd.getDataInicioAplic());
@@ -40,11 +41,37 @@ public class AvaliacaoServiceImpl implements AvaliacaoService {
         a.setkMinimo(cmd.getkMinimo());
         a.setStatus(cmd.getStatus());
         a.setAtivo(cmd.getAtivo() != null ? cmd.getAtivo() : Boolean.TRUE);
+
+        // versão inicial
+        a.setVersao(1);
+
+        // >>> NOVO: escopo / unidade / especialidade <<<
+        // se vier nulo, assume GLOBAL
+        String escopo = cmd.getEscopo();
+        if (escopo == null || escopo.isBlank()) {
+            escopo = "GLOBAL";
+        }
+        a.setEscopo(escopo);
+
+        // unidade / especialidade conforme o escopo
+        if ("UNIDADE".equalsIgnoreCase(escopo)) {
+            a.setIdUnidade(cmd.getIdUnidade());
+            a.setIdEspecialidade(null);
+        } else if ("ESPECIALIDADE".equalsIgnoreCase(escopo)) {
+            a.setIdEspecialidade(cmd.getIdEspecialidade());
+            a.setIdUnidade(null);
+        } else { // GLOBAL
+            a.setIdUnidade(null);
+            a.setIdEspecialidade(null);
+        }
+
         return dao.insert(a);
     }
 
+
     @Override
     public void update(Long id, AvaliacaoUpdate cmd) {
+
         Avaliacao atual = dao.findById(id)
                 .orElseThrow(AvaliacaoNaoEncontradaException::new);
 
@@ -52,31 +79,74 @@ public class AvaliacaoServiceImpl implements AvaliacaoService {
         if ("ENCERRADA".equalsIgnoreCase(atual.getStatus())) {
             throw new AvaliacaoEncerradaException();
         }
+
         if ("PUBLICADA".equalsIgnoreCase(atual.getStatus())) {
-            // ajuste conforme sua política; abaixo um exemplo mais restritivo
-            if (cmd.titulo() != null || cmd.dataInicioAplic() != null || cmd.dataFimAplic() != null
-                    || cmd.kMinimo() != null || cmd.status() != null) {
+            // exemplo restritivo: só permite mudar status/ativo em PUBLICADA
+            if (cmd.titulo() != null
+                    || cmd.dataInicioAplic() != null
+                    || cmd.dataFimAplic() != null
+                    || cmd.kMinimo() != null) {
                 throw new AvaliacaoJaPublicadaException();
             }
         }
 
-        // Aplicação dos campos (somente se enviados)
-        if (cmd.titulo() != null) atual.setTitulo(cmd.titulo());
-        if (cmd.dataInicioAplic() != null) atual.setDataInicioAplic(cmd.dataInicioAplic());
-        if (cmd.dataFimAplic() != null) atual.setDataFimAplic(cmd.dataFimAplic());
-        if (cmd.kMinimo() != null) atual.setkMinimo(cmd.kMinimo());
-        if (cmd.status() != null) atual.setStatus(cmd.status());
-        if (cmd.ativo() != null) atual.setAtivo(cmd.ativo());
-
-        // Validação de datas se ambas presentes após merge
-        if (atual.getDataInicioAplic() != null && atual.getDataFimAplic() != null
-                && atual.getDataInicioAplic().isAfter(atual.getDataFimAplic())) {
-            throw new IllegalArgumentException("DATA_INICIO_APLIC deve ser ≤ DATA_FIM_APLIC.");
+        // ================================
+        // Atualização dos campos básicos
+        // ================================
+        if (cmd.titulo() != null) {
+            atual.setTitulo(cmd.titulo());
+        }
+        if (cmd.dataInicioAplic() != null) {
+            atual.setDataInicioAplic(cmd.dataInicioAplic());
+        }
+        if (cmd.dataFimAplic() != null) {
+            atual.setDataFimAplic(cmd.dataFimAplic());
+        }
+        if (cmd.kMinimo() != null) {
+            atual.setkMinimo(cmd.kMinimo());
+        }
+        if (cmd.status() != null) {
+            atual.setStatus(cmd.status());
+        }
+        if (cmd.ativo() != null) {
+            atual.setAtivo(cmd.ativo());
         }
 
-        int rows = dao.update(atual);
-        if (rows == 0) throw new AvaliacaoNaoEncontradaException();
+        // ================================
+        // NOVO: escopo / unidade / especialidade
+        // ================================
+        if (cmd.escopo() != null) {
+            String esc = cmd.escopo();
+            atual.setEscopo(esc);
+
+            if ("GLOBAL".equalsIgnoreCase(esc)) {
+                atual.setIdUnidade(null);
+                atual.setIdEspecialidade(null);
+            } else if ("UNIDADE".equalsIgnoreCase(esc)) {
+                // quando muda pra UNIDADE, limpa especialidade
+                atual.setIdEspecialidade(null);
+            } else if ("ESPECIALIDADE".equalsIgnoreCase(esc)) {
+                // quando muda pra ESPECIALIDADE, limpa unidade
+                atual.setIdUnidade(null);
+            }
+        }
+
+        // se vier unidade/especialidade explícitas, aplica
+        if (cmd.idUnidade() != null) {
+            atual.setIdUnidade(cmd.idUnidade());
+        }
+        if (cmd.idEspecialidade() != null) {
+            atual.setIdEspecialidade(cmd.idEspecialidade());
+        }
+
+        // versão: incrementa ou mantém sua lógica atual
+        atual.setVersao(
+                atual.getVersao() != null ? atual.getVersao() + 1 : 1
+        );
+
+        dao.update(atual);
     }
+
 
 
     @Override

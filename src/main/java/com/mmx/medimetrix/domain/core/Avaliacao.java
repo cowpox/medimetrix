@@ -26,6 +26,10 @@ public class Avaliacao {
     private LocalDateTime dataCriacao;       // TIMESTAMP NOT NULL
     private LocalDateTime dataUltimaEdicao;  // TIMESTAMP NOT NULL
 
+    private String escopo;
+    private Long idUnidade;
+    private Long idEspecialidade;
+
     public Avaliacao() {}
 
     public Long getIdAvaliacao() { return idAvaliacao; }
@@ -57,6 +61,15 @@ public class Avaliacao {
 
     public LocalDateTime getDataUltimaEdicao() { return dataUltimaEdicao; }
     public void setDataUltimaEdicao(LocalDateTime dataUltimaEdicao) { this.dataUltimaEdicao = dataUltimaEdicao; }
+
+    public String getEscopo() { return escopo; }
+    public void setEscopo(String escopo) { this.escopo = escopo; }
+
+    public Long getIdUnidade() { return idUnidade; }
+    public void setIdUnidade(Long idUnidade) { this.idUnidade = idUnidade; }
+
+    public Long getIdEspecialidade() { return idEspecialidade; }
+    public void setIdEspecialidade(Long idEspecialidade) { this.idEspecialidade = idEspecialidade; }
 
     @Override
     public String toString() {

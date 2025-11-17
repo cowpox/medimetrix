@@ -83,16 +83,61 @@
             </td>
 
             <td class="text-end">
-                <a class="btn btn-sm btn-outline-primary me-1"
-                   th:href="@{'/app/avaliacoes/' + ${a.id} + '/editar'}">
-                    Editar
-                </a>
+                <div th:switch="${a.status}">
 
-                <a class="btn btn-sm btn-outline-secondary"
-                   th:href="@{'/app/avaliacoes/' + ${a.id} + '/questoes'}">
-                    Questões
-                </a>
+                    <!-- RASCUNHO → pode editar -->
+                    <div th:case="'RASCUNHO'">
+                        <a class="btn btn-sm btn-outline-primary"
+                           th:href="@{'/app/avaliacoes/' + ${a.id} + '/editar'}">
+                            Editar
+                        </a>
+                    </div>
+
+                    <!-- PUBLICADA → pode suspender -->
+                    <div th:case="'PUBLICADA'">
+                        <form th:action="@{'/app/avaliacoes/' + ${a.id} + '/suspender'}"
+                              method="post"
+                              class="d-inline">
+
+                            <!-- CSRF -->
+                            <th:block th:if="${_csrf != null}">
+                                <input type="hidden"
+                                       th:name="${_csrf.parameterName}"
+                                       th:value="${_csrf.token}"/>
+                            </th:block>
+
+                            <input type="hidden" name="confirm"
+                                   th:value="${confirmSuspensaoId != null and confirmSuspensaoId == a.id} ? 'true' : 'false'"/>
+
+                            <button type="submit"
+                                    class="btn btn-sm btn-outline-danger"
+                                    th:text="${confirmSuspensaoId != null and confirmSuspensaoId == a.id}
+                                 ? 'Confirmar suspensão'
+                                 : 'Suspender'">
+                                Suspender
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- ENCERRADA (e demais) → apenas visualizar -->
+                    <div th:case="'ENCERRADA'">
+                        <a class="btn btn-sm btn-outline-secondary"
+                           th:href="@{'/app/avaliacoes/' + ${a.id} + '/editar'}">
+                            Visualizar
+                        </a>
+                    </div>
+
+                    <!-- fallback -->
+                    <div th:case="*">
+                        <a class="btn btn-sm btn-outline-secondary"
+                           th:href="@{'/app/avaliacoes/' + ${a.id} + '/editar'}">
+                            Detalhes
+                        </a>
+                    </div>
+
+                </div>
             </td>
+
         </tr>
 
 

@@ -1,22 +1,28 @@
 <div th:fragment="content">
     <h2 class="h5 mb-3"
-        th:text="${form.id} != null ? 'Editar avaliação' : 'Nova avaliação'">
+        th:text="${form.id} != null ?
+                 (${modoLeitura} ? 'Visualizar avaliação' : 'Editar avaliação')
+                 : 'Nova avaliação'">
         Avaliação
     </h2>
 
     <form th:object="${form}"
           th:action="${form.id} != null ? @{'/app/avaliacoes/' + ${form.id}} : @{/app/avaliacoes}"
           method="post"
-          class="card p-3">
+          class="card p-3"
+          id="avaliacaoForm"
+          th:attr="data-modo-leitura=${modoLeitura}">
 
-        <div class="row g-3">
+
+    <div class="row g-3">
 
             <!-- Título -->
             <div class="col-md-8">
                 <label class="form-label" for="titulo">Título</label>
                 <input id="titulo" type="text" class="form-control"
                        placeholder="Ex.: Avaliação de desempenho 2025 – Pronto Atendimento"
-                       th:field="*{titulo}">
+                       th:field="*{titulo}"
+                       th:readonly="${modoLeitura}">
                 <div class="text-danger"
                      th:if="${#fields.hasErrors('titulo')}"
                      th:errors="*{titulo}"></div>
@@ -27,7 +33,8 @@
                 <label class="form-label" for="kMinimo">k-mínimo (anonimato)</label>
                 <input id="kMinimo" type="number" min="2"
                        class="form-control text-end"
-                       th:field="*{kMinimo}">
+                       th:field="*{kMinimo}"
+                       th:readonly="${modoLeitura}">
                 <div class="form-text">
                     Número mínimo de participantes para exibir resultados individualizados.
                 </div>
@@ -41,7 +48,8 @@
                 <label class="form-label" for="dataInicioAplic">Início da aplicação</label>
                 <input id="dataInicioAplic" type="date"
                        class="form-control"
-                       th:field="*{dataInicioAplic}">
+                       th:field="*{dataInicioAplic}"
+                       th:readonly="${modoLeitura}">
             </div>
 
             <!-- Data fim -->
@@ -49,55 +57,16 @@
                 <label class="form-label" for="dataFimAplic">Fim da aplicação</label>
                 <input id="dataFimAplic" type="date"
                        class="form-control"
-                       th:field="*{dataFimAplic}">
-            </div>
-
-            <!-- Escopo dos participantes -->
-            <div class="col-md-3">
-                <label class="form-label" for="escopo">Escopo dos participantes</label>
-                <select id="escopo" class="form-select" th:field="*{escopo}">
-                    <option value="">Selecione...</option>
-                    <option th:each="e : ${escopoOptions}"
-                            th:value="${e}"
-                            th:text="${e == 'GLOBAL' ? 'Global (todos os médicos)'
-                                      : e == 'UNIDADE' ? 'Por unidade'
-                                      : 'Por especialidade'}">
-                    </option>
-                </select>
-                <div class="text-danger"
-                     th:if="${#fields.hasErrors('escopo')}"
-                     th:errors="*{escopo}"></div>
-            </div>
-
-            <!-- Unidade (mostrada quando escopo = UNIDADE) -->
-            <div class="col-md-3" id="grupo-unidade">
-                <label class="form-label" for="idUnidade">Unidade</label>
-                <select id="idUnidade" class="form-select" th:field="*{idUnidade}">
-                    <option value="">Selecione a unidade...</option>
-                    <option th:each="u : ${unidades}"
-                            th:value="${u.idUnidade}"
-                            th:text="${u.nome}">
-                    </option>
-                </select>
-            </div>
-
-            <!-- Especialidade (mostrada quando escopo = ESPECIALIDADE) -->
-            <div class="col-md-3" id="grupo-especialidade">
-                <label class="form-label" for="idEspecialidade">Especialidade</label>
-                <select id="idEspecialidade" class="form-select" th:field="*{idEspecialidade}">
-                    <option value="">Selecione a especialidade...</option>
-                    <option th:each="e : ${especialidades}"
-                            th:value="${e.idEspecialidade}"
-                            th:text="${e.nome}">
-                    </option>
-                </select>
+                       th:field="*{dataFimAplic}"
+                       th:readonly="${modoLeitura}">
             </div>
 
             <!-- Status -->
             <div class="col-md-3">
                 <label class="form-label" for="status">Status</label>
                 <select id="status" class="form-select"
-                        th:field="*{status}">
+                        th:field="*{status}"
+                        th:disabled="${modoLeitura}">
                     <option value="">Selecione...</option>
                     <option th:each="s : ${statusOptions}"
                             th:value="${s}"
@@ -114,50 +83,124 @@
                 <label class="form-label d-block">Situação</label>
                 <div class="form-check form-switch mt-1">
                     <input class="form-check-input" type="checkbox"
-                           id="ativo" th:field="*{ativo}">
+                           id="ativo"
+                           th:field="*{ativo}"
+                           th:disabled="${modoLeitura}">
                     <label class="form-check-label" for="ativo">Ativo</label>
                 </div>
             </div>
+
+            <!-- Escopo -->
+            <div class="col-md-3">
+                <label class="form-label" for="escopo">Escopo</label>
+                <select id="escopo" class="form-select"
+                        th:field="*{escopo}"
+                        th:disabled="${modoLeitura}">
+                    <option th:value="GLOBAL">Global</option>
+                    <option th:value="UNIDADE">Por unidade</option>
+                    <option th:value="ESPECIALIDADE">Por especialidade</option>
+                </select>
+            </div>
+
+            <!-- Unidade -->
+            <div class="col-md-3" id="grupoUnidade">
+                <label class="form-label" for="idUnidade">Unidade</label>
+                <select id="idUnidade" class="form-select"
+                        th:field="*{idUnidade}"
+                        th:disabled="${modoLeitura}">
+                    <option value="">(todas)</option>
+                    <option th:each="u : ${unidades}"
+                            th:value="${u.idUnidade}"
+                            th:text="${u.nome}">
+                    </option>
+                </select>
+            </div>
+
+            <!-- Especialidade -->
+            <div class="col-md-3" id="grupoEspecialidade">
+                <label class="form-label" for="idEspecialidade">Especialidade</label>
+                <select id="idEspecialidade" class="form-select"
+                        th:field="*{idEspecialidade}"
+                        th:disabled="${modoLeitura}">
+                    <option value="">(todas)</option>
+                    <option th:each="e : ${especialidades}"
+                            th:value="${e.idEspecialidade}"
+                            th:text="${e.nome}">
+                    </option>
+                </select>
+            </div>
+
 
         </div>
 
         <div class="mt-3 d-flex justify-content-between">
             <a class="btn btn-outline-secondary"
                th:href="@{/app/avaliacoes}">
-                Cancelar
+                Voltar
             </a>
 
-            <button type="submit" class="btn btn-primary">
-                Salvar
-            </button>
+            <div>
+                <!-- Botão Questões aparece quando já existe ID -->
+                <a class="btn btn-outline-primary me-2"
+                   th:if="${form.id != null}"
+                   th:href="@{'/app/avaliacoes/' + ${form.id} + '/questoes'}">
+                    Questões
+                </a>
+
+
+                <!-- Botão Salvar só quando não está em modo leitura -->
+                <button type="submit" class="btn btn-primary"
+                        th:if="${!modoLeitura}">
+                    Salvar
+                </button>
+            </div>
         </div>
     </form>
-
     <script th:inline="javascript">
-        function atualizarVisibilidadeEscopo() {
-            var escopo = document.getElementById('escopo').value;
-            var grupoUnidade = document.getElementById('grupo-unidade');
-            var grupoEspecialidade = document.getElementById('grupo-especialidade');
-
-            if (escopo === 'UNIDADE') {
-                grupoUnidade.style.display = 'block';
-                grupoEspecialidade.style.display = 'none';
-            } else if (escopo === 'ESPECIALIDADE') {
-                grupoUnidade.style.display = 'none';
-                grupoEspecialidade.style.display = 'block';
-            } else {
-                // GLOBAL ou vazio
-                grupoUnidade.style.display = 'none';
-                grupoEspecialidade.style.display = 'none';
-            }
-        }
-
         document.addEventListener('DOMContentLoaded', function () {
             var escopoSelect = document.getElementById('escopo');
-            if (escopoSelect) {
-                escopoSelect.addEventListener('change', atualizarVisibilidadeEscopo);
-                atualizarVisibilidadeEscopo(); // estado inicial
+            var grupoUnidade = document.getElementById('grupoUnidade');
+            var grupoEspecialidade = document.getElementById('grupoEspecialidade');
+            var formElem = document.getElementById('avaliacaoForm');
+
+            if (!escopoSelect || !grupoUnidade || !grupoEspecialidade || !formElem) {
+                return;
             }
+
+            var isReadOnly = formElem.getAttribute('data-modo-leitura') === 'true';
+            // Em modo leitura, não esconde nada — só mostra como está gravado
+            if (isReadOnly) {
+                return;
+            }
+
+            function atualizarVisibilidade() {
+                var valor = escopoSelect.value;
+
+                if (valor === 'GLOBAL') {
+                    grupoUnidade.classList.add('d-none');
+                    grupoEspecialidade.classList.add('d-none');
+                    var selUnidade = document.getElementById('idUnidade');
+                    var selEsp = document.getElementById('idEspecialidade');
+                    if (selUnidade) selUnidade.value = '';
+                    if (selEsp) selEsp.value = '';
+                } else if (valor === 'UNIDADE') {
+                    grupoUnidade.classList.remove('d-none');
+                    grupoEspecialidade.classList.add('d-none');
+                    var selEsp = document.getElementById('idEspecialidade');
+                    if (selEsp) selEsp.value = '';
+                } else if (valor === 'ESPECIALIDADE') {
+                    grupoUnidade.classList.add('d-none');
+                    grupoEspecialidade.classList.remove('d-none');
+                    var selUnidade = document.getElementById('idUnidade');
+                    if (selUnidade) selUnidade.value = '';
+                }
+            }
+
+            escopoSelect.addEventListener('change', atualizarVisibilidade);
+            atualizarVisibilidade(); // inicial
         });
     </script>
+
+
+
 </div>

@@ -10,6 +10,11 @@ public class AvaliacaoCreate {
     private String status; // RASCUNHO | PUBLICADA | ENCERRADA
     private Boolean ativo;
 
+    // novos
+    private String escopo;        // GLOBAL | UNIDADE | ESPECIALIDADE
+    private Long idUnidade;
+    private Long idEspecialidade;
+
     public String getTitulo() { return titulo; }
     public void setTitulo(String titulo) { this.titulo = titulo; }
 
@@ -27,4 +32,13 @@ public class AvaliacaoCreate {
 
     public Boolean getAtivo() { return ativo; }
     public void setAtivo(Boolean ativo) { this.ativo = ativo; }
+
+    public String getEscopo() { return escopo; }
+    public void setEscopo(String escopo) { this.escopo = escopo; }
+
+    public Long getIdUnidade() { return idUnidade; }
+    public void setIdUnidade(Long idUnidade) { this.idUnidade = idUnidade; }
+
+    public Long getIdEspecialidade() { return idEspecialidade; }
+    public void setIdEspecialidade(Long idEspecialidade) { this.idEspecialidade = idEspecialidade; }
 }
