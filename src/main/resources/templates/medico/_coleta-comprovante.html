@@ -1,5 +1,46 @@
 <div th:fragment="content">
-    <h2 class="h5">Comprovante de envio</h2>
-    <p class="text-success">Avaliação enviada em 08/11/2025 10:45 (dummy)</p>
-    <a class="btn btn-primary" th:href="@{/app/coleta}">Voltar para Minhas Avaliações</a>
+
+    <div class="mb-3">
+        <h2 class="h5 mb-1">Avaliação enviada com sucesso</h2>
+        <p class="text-muted mb-0">
+            Agradecemos por concluir esta avaliação.
+        </p>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title mb-2" th:text="${avaliacao.titulo}">Título da avaliação</h5>
+
+            <p class="card-text mb-1">
+                <strong>Período de aplicação:</strong>
+                <span th:text="|${#temporals.format(avaliacao.dataInicioAplic, 'dd/MM/yyyy')} – ${#temporals.format(avaliacao.dataFimAplic, 'dd/MM/yyyy')}|">
+          01/01/2025 – 31/01/2025
+        </span>
+            </p>
+
+            <p class="card-text mb-1">
+                <strong>Médico:</strong>
+                <span th:text="${medicoNome != null ? medicoNome : ('ID ' + medicoId)}">
+          Nome do médico
+        </span>
+            </p>
+
+            <p class="card-text mb-0">
+                <strong>Status da participação:</strong>
+                <span class="badge text-bg-success">Respondida</span>
+            </p>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
+        <a class="btn btn-primary"
+           th:href="@{/app/coleta(medicoId=${medicoId})}">
+            Voltar para Minhas Avaliações
+        </a>
+        <a class="btn btn-outline-secondary"
+           th:href="@{'/app/coleta/' + ${avaliacao.idAvaliacao} + '/responder'(medicoId=${medicoId})}">
+            Ver respostas
+        </a>
+    </div>
+
 </div>

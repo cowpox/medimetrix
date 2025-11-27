@@ -1,22 +1,158 @@
 <div th:fragment="content">
-    <h2 class="h5 mb-3">Responder avaliação</h2>
-    <form th:action="@{/app/coleta/1/responder}" method="post" class="vstack gap-3">
+
+    <!-- Cabeçalho da avaliação -->
+    <div class="d-flex justify-content-between align-items-start mb-3">
         <div>
-            <label class="form-label">1) O médico explica o diagnóstico de forma clara?</label>
-            <select class="form-select" name="q1">
-                <option>1 - Discordo totalmente</option>
-                <option>2</option><option>3</option><option>4</option>
-                <option selected>5 - Concordo totalmente</option>
-            </select>
+            <h2 class="h5 mb-1" th:text="${avaliacao.titulo}">Título da avaliação</h2>
+            <p class="text-muted mb-1">
+        <span th:text="|Período: ${#temporals.format(avaliacao.dataInicioAplic, 'dd/MM/yyyy')} – ${#temporals.format(avaliacao.dataFimAplic, 'dd/MM/yyyy')}|">
+          Período: 01/01/2025 – 31/01/2025
+        </span>
+                <span> • Situação: </span>
+                <span class="badge"
+                      th:text="${participacaoStatusLabel}"
+                      th:classappend="' ' + ${participacaoBadgeClass}">
+          Em andamento
+        </span>
+            </p>
+            <p class="text-muted small mb-0">
+                Prazo: <span th:text="${prazo}">31/01/2025</span>
+            </p>
         </div>
-        <div>
-            <label class="form-label">2) Comentários</label>
-            <textarea class="form-control" rows="3" name="q2"></textarea>
+        <div class="text-end small">
+            <div class="text-muted">
+                Médico simulado:
+                <strong th:text="${medicoNome}">Dr. Exemplo</strong>
+            </div>
         </div>
-        <div class="d-flex gap-2">
-            <button class="btn btn-outline-primary" name="acao" value="salvar" type="submit">Salvar rascunho</button>
-            <button class="btn btn-primary" name="acao" value="enviar" formaction="/app/coleta/1/enviar" formmethod="post">Enviar</button>
-            <a class="btn btn-outline-secondary" th:href="@{/app/coleta/1}">Voltar</a>
+    </div>
+
+    <div th:if="${apenasLeitura}" class="alert alert-info py-2 small mb-3">
+        Esta avaliação está encerrada ou já foi enviada e encontra-se em modo somente leitura.
+    </div>
+
+    <div th:if="${validationError != null}" class="alert alert-danger py-2 small mb-3"
+         th:text="${validationError}">
+        Existem questões obrigatórias sem resposta.
+    </div>
+
+
+
+    <form th:action="@{'/app/coleta/' + ${avaliacao.idAvaliacao} + '/responder'}"
+          method="post"
+          class="vstack gap-3">
+
+        <input type="hidden" name="medicoId" th:value="${medicoId}"/>
+
+        <div th:each="q, idxStat : ${questoes}">
+            <input type="hidden" name="questaoIds" th:value="${q.idQuestao}"/>
+
+            <div class="card">
+                <div class="card-body">
+                    <label class="form-label fw-semibold"
+                           th:for="${'q-' + q.idQuestao}"
+                           th:text="${idxStat.index + 1} + ') ' + ${q.enunciado}">
+                        1) Texto da questão
+                    </label>
+
+                    <p class="text-muted small mb-2"
+                       th:if="${q.descricaoAuxiliar != null}"
+                       th:text="${q.descricaoAuxiliar}">
+                        Texto auxiliar / instruções da questão.
+                    </p>
+
+                    <!-- Tipos numéricos: LIKERT_5, BARS_5, NUM_0_10 -->
+                    <div th:if="${q.tipo == 'LIKERT_5' or q.tipo == 'BARS_5' or q.tipo == 'NUM_0_10'}">
+                        <select class="form-select"
+                                th:id="${'q-' + q.idQuestao}"
+                                th:name="${'valorNumerico__' + q.idQuestao}"
+                                th:disabled="${apenasLeitura}">
+                            <option value="" th:selected="${q.valorNumerico == null}">
+                                Selecione...
+                            </option>
+
+                            <!-- LIKERT_5 / BARS_5 → 1..5 -->
+                            <option th:if="${q.tipo == 'LIKERT_5' or q.tipo == 'BARS_5'}"
+                                    th:each="v : ${#numbers.sequence(1,5)}"
+                                    th:value="${v}"
+                                    th:text="${v}"
+                                    th:selected="${q.valorNumerico != null and q.valorNumerico == v}">
+                                1
+                            </option>
+
+                            <!-- NUM_0_10 → 0..10 -->
+                            <option th:if="${q.tipo == 'NUM_0_10'}"
+                                    th:each="v : ${#numbers.sequence(0,10)}"
+                                    th:value="${v}"
+                                    th:text="${v}"
+                                    th:selected="${q.valorNumerico != null and q.valorNumerico == v}">
+                                0
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Tipo OPEN (resposta aberta) -->
+                    <div th:if="${q.tipo == 'OPEN'}">
+            <textarea class="form-control"
+                      rows="3"
+                      th:id="${'q-' + q.idQuestao}"
+                      th:name="${'texto__' + q.idQuestao}"
+                      th:text="${q.texto}"
+                      th:disabled="${apenasLeitura}">
+            </textarea>
+                    </div>
+
+                    <!-- Tipo CHECK (sim/não) -->
+                    <div th:if="${q.tipo == 'CHECK'}">
+                        <div class="form-check">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   th:id="${'q-' + q.idQuestao}"
+                                   th:name="${'valorBinario__' + q.idQuestao}"
+                                   th:checked="${q.valorBinario}"
+                                   th:disabled="${apenasLeitura}">
+                            <label class="form-check-label" th:for="${'q-' + q.idQuestao}">
+                                Marcar se aplicável
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mt-2">
+            <span class="badge text-bg-light small"
+                  th:if="${q.obrigatoria}">
+              Obrigatória
+            </span>
+                    </div>
+
+                </div>
+            </div>
         </div>
+
+        <!-- Botões -->
+        <div class="d-flex gap-2 mt-3">
+            <button type="submit"
+                    class="btn btn-outline-primary"
+                    name="acao"
+                    value="salvar"
+                    th:disabled="${apenasLeitura}">
+                Salvar rascunho
+            </button>
+
+            <button type="submit"
+                    class="btn btn-primary"
+                    formaction=""
+                    th:formaction="@{'/app/coleta/' + ${avaliacao.idAvaliacao} + '/enviar'}"
+                    name="acao"
+                    value="enviar"
+                    th:disabled="${apenasLeitura}">
+                Enviar avaliação
+            </button>
+
+            <a class="btn btn-outline-secondary"
+               th:href="@{/app/coleta(medicoId=${medicoId})}">
+                Voltar para Minhas Avaliações
+            </a>
+        </div>
+
     </form>
 </div>
