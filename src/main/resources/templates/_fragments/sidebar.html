@@ -1,32 +1,76 @@
-
-
 <div th:fragment="sidebar" class="border-end bg-white" style="min-width:260px;">
     <div class="p-3 border-bottom"><strong>Menu</strong></div>
     <div class="list-group list-group-flush">
 
-        <div class="list-group-item small text-uppercase fw-semibold text-white bg-medico">Médico</div>
+        <!-- MÉDICO -->
+        <div class="list-group-item small text-uppercase fw-semibold text-white bg-medico">
+            Médico
+        </div>
         <a class="list-group-item list-group-item-action link-medico"
-           th:href="@{/app/coleta(role='medico')}">Minhas Avaliações</a>
+           th:href="@{/app/coleta(role='medico')}">
+            Minhas Avaliações
+        </a>
 
-        <div class="list-group-item small text-uppercase fw-semibold text-white bg-gestor">Gestor</div>
-        <a class="list-group-item list-group-item-action link-gestor"
-           th:href="@{/app/catalogo/criterios(role='gestor')}">Catálogo • Critérios</a>
-        <a class="list-group-item list-group-item-action link-gestor"
-           th:href="@{/app/catalogo/metas(role='gestor')}">Catálogo • Metas</a>
-        <a class="list-group-item list-group-item-action link-gestor"
-           th:href="@{/app/catalogo/questoes(role='gestor')}">Catálogo • Questões</a>
-        <a class="list-group-item list-group-item-action link-gestor"
-           th:href="@{/app/avaliacoes(role='gestor')}">Avaliações</a>
+        <!-- GESTOR -->
+        <div class="list-group-item small text-uppercase fw-semibold text-white bg-gestor">
+            Gestor
+        </div>
 
-        <div class="list-group-item small text-uppercase fw-semibold text-white bg-admin">Admin</div>
+        <a class="list-group-item list-group-item-action link-gestor"
+           th:href="@{/app/catalogo/criterios(role='gestor')}">
+            Catálogo • Critérios
+        </a>
+
+        <a class="list-group-item list-group-item-action link-gestor"
+           th:href="@{/app/catalogo/metas(role='gestor')}">
+            Catálogo • Metas
+        </a>
+
+        <a class="list-group-item list-group-item-action link-gestor"
+           th:href="@{/app/catalogo/questoes(role='gestor')}">
+            Catálogo • Questões
+        </a>
+
+        <a class="list-group-item list-group-item-action link-gestor"
+           th:href="@{/app/avaliacoes(role='gestor')}">
+            Avaliações
+        </a>
+
+        <!-- RELATÓRIOS GESTOR -->
+        <div class="list-group-item small text-uppercase fw-semibold text-white bg-gestor">
+            Relatórios
+        </div>
+
+        <a class="list-group-item list-group-item-action link-gestor"
+           th:href="@{/app/gestor/relatorios/avaliacoes}">
+            Relatórios de Avaliações
+        </a>
+
+
+        <!-- ADMIN -->
+        <div class="list-group-item small text-uppercase fw-semibold text-white bg-admin">
+            Admin
+        </div>
+
         <a class="list-group-item list-group-item-action link-admin"
-           th:href="@{/app/admin/usuarios(role='admin')}">Usuários</a>
+           th:href="@{/app/admin/usuarios(role='admin')}">
+            Usuários
+        </a>
+
         <a class="list-group-item list-group-item-action link-admin"
-           th:href="@{/app/admin/medicos(role='admin')}">Médicos</a>
+           th:href="@{/app/admin/medicos(role='admin')}">
+            Médicos
+        </a>
+
         <a class="list-group-item list-group-item-action link-admin"
-           th:href="@{/app/admin/unidades(role='admin')}">Unidades</a>
+           th:href="@{/app/admin/unidades(role='admin')}">
+            Unidades
+        </a>
+
         <a class="list-group-item list-group-item-action link-admin"
-           th:href="@{/app/admin/especialidades(role='admin')}">Especialidades</a>
+           th:href="@{/app/admin/especialidades(role='admin')}">
+            Especialidades
+        </a>
 
     </div>
 </div>

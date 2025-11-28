@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR"
+      th:replace="_layouts/default :: layout (${pageTitle}, ${breadcrumb}, ~{::content})">
+
+<div th:fragment="content">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h5 mb-0">Relatórios de avaliações</h2>
+    </div>
+
+    <!-- Filtros -->
+    <form class="row g-2 mb-3" method="get"
+          th:action="@{/app/gestor/relatorios/avaliacoes}">
+        <!-- Título -->
+        <div class="col-md-5">
+            <input class="form-control" type="text" name="termo"
+                   placeholder="Título..."
+                   th:value="${termo}">
+        </div>
+
+        <!-- Situação -->
+        <div class="col-md-3">
+            <select class="form-select" name="status">
+                <option value="">Situação (todas)</option>
+                <option value="RASCUNHO"  th:selected="${status == 'RASCUNHO'}">Rascunho</option>
+                <option value="PUBLICADA" th:selected="${status == 'PUBLICADA'}">Publicada</option>
+                <option value="ENCERRADA" th:selected="${status == 'ENCERRADA'}">Encerrada</option>
+            </select>
+        </div>
+
+        <!-- Botões -->
+        <div class="col-md-4 d-flex gap-2">
+            <button type="submit" class="btn btn-primary flex-grow-1">Filtrar</button>
+            <a th:href="@{/app/gestor/relatorios/avaliacoes}"
+               class="btn btn-outline-secondary flex-grow-1">Limpar</a>
+        </div>
+    </form>
+
+    <!-- Tabela -->
+    <div class="table-responsive">
+        <table class="table table-sm align-middle">
+            <thead>
+            <tr>
+                <th>Título</th>
+                <th>Período</th>
+                <th>Situação</th>
+                <th class="text-center">Participações</th>
+                <th class="text-end">Ações</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${avaliacoes.empty}">
+                <td colspan="5" class="text-center text-muted py-4">
+                    Nenhuma avaliação encontrada para os filtros informados.
+                </td>
+            </tr>
+
+            <tr th:each="av : ${avaliacoes}">
+                <td th:text="${av.titulo()}">Título</td>
+                <td th:text="${av.periodo()}">Nov/2025</td>
+                <td>
+                    <span class="badge"
+                          th:text="${av.statusLabel()}"
+                          th:classappend="' ' + ${av.statusBadgeClass()}">
+                        Publicada
+                    </span>
+                </td>
+                <td class="text-center" th:text="${av.totalParticipacoes()}">0</td>
+                <td class="text-end">
+                    <a class="btn btn-sm btn-outline-primary"
+                       th:href="@{'/app/gestor/relatorios/avaliacoes/' + ${av.id()}}">
+                        Abrir relatório
+                    </a>
+
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+</html>

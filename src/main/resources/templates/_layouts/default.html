@@ -2,17 +2,17 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR"
       th:fragment="layout (pageTitle, breadcrumb, conteudo)">
 
-<head th:replace="_fragments/head :: head"></head>
+<head th:replace="~{_fragments/head :: head}"></head>
 
 <body class="bg-body-tertiary">
 <!-- 'role' já vem do RoleAdvice -->
 <header th:replace="~{_fragments/navbar :: navbar(role=${role})}"></header>
 
 <div class="d-flex" style="min-height: calc(100vh - 56px);">
-    <aside th:replace="_fragments/sidebar :: sidebar"></aside>
+    <aside th:replace="~{_fragments/sidebar :: sidebar}"></aside>
 
     <main class="flex-grow-1">
-        <section th:replace="_fragments/alerts :: alerts"></section>
+        <section th:replace="~{_fragments/alerts :: alerts}"></section>
 
         <div class="container py-4">
             <div class="d-flex align-items-center justify-content-between">
