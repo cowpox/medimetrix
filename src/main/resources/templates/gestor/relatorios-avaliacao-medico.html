@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR"
+      th:replace="~{_layouts/default :: layout(${pageTitle}, ${breadcrumb}, ~{::content})}">
+
+<div th:fragment="content">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h5 mb-0">Relatório por médico</h2>
+        <a th:href="@{'/app/gestor/relatorios/avaliacoes/' + ${resumo.idAvaliacao()}}"
+           class="btn btn-outline-secondary btn-sm">
+            &larr; Voltar para a avaliação
+        </a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-8">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Relatório por médico</h5>
+
+                    <p class="mb-1">
+                        <strong>Médico: </strong>
+                        <span th:text="${resumo.nomeMedico}">Nome do médico</span>
+                    </p>
+
+                    <p class="mb-1">
+                        <strong>Especialidade: </strong>
+                        <span th:text="${resumo.nomeEspecialidade} ?: '-'">Clínica Médica</span>
+                    </p>
+
+                    <p class="mb-1">
+                        <strong>Unidade: </strong>
+                        <span th:text="${resumo.nomeUnidade} ?: '-'">Unidade X</span>
+                    </p>
+
+                    <p class="mb-1">
+                        <strong>Avaliação: </strong>
+                        <span th:text="${resumo.tituloAvaliacao}">Auto Mar/2025 – Humanização</span>
+                    </p>
+
+                    <p class="mb-1">
+                        <strong>Período: </strong>
+                        <span th:text="${resumo.periodo}">01/03/2025 a 31/03/2025</span>
+                    </p>
+
+                    <p class="mb-0">
+                        <strong>Status: </strong>
+                        <span class="badge"
+                              th:text="${resumo.statusLabel}"
+                              th:classappend="' ' + ${resumo.statusBadgeClass}">
+                    Encerrada
+                </span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+
+
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">Resumo das notas</h6>
+
+                    <div class="mb-3 text-center">
+                        <div class="text-muted small">Nota global</div>
+                        <div class="display-5 fw-semibold">
+                            <span th:if="${resumo.media} != null"
+                                  th:text="${#numbers.formatDecimal(resumo.media, 1, 2)}">
+                                3,90
+                            </span>
+                            <span th:if="${resumo.media} == null">-</span>
+                        </div>
+                        <div class="text-muted small" th:switch="${resumo.media()}">
+                            <span th:case="null">
+                                Sem nota calculada até o momento.
+                            </span>
+                            <span th:case="*"
+                                  th:text="${resumo.media()} >= 4.0 ? 'Desempenho muito bom' :
+                                           (${resumo.media()} >= 3.0 ? 'Desempenho satisfatório' :
+                                                                       'Desempenho de atenção')">
+                                Desempenho satisfatório
+                            </span>
+                        </div>
+                    </div>
+
+                    <dl class="row mb-0 small">
+                        <dt class="col-6">Média</dt>
+                        <dd class="col-6 text-end">
+                            <span th:if="${resumo.media} != null"
+                                  th:text="${#numbers.formatDecimal(resumo.media, 1, 2)}">
+                                3,90
+                            </span>
+                            <span th:if="${resumo.media} == null">-</span>
+                        </dd>
+
+                        <dt class="col-6">Menor nota</dt>
+                        <dd class="col-6 text-end">
+                            <span th:if="${resumo.menorNota} != null"
+                                  th:text="${#numbers.formatDecimal(resumo.menorNota, 1, 2)}">
+                                2,00
+                            </span>
+                            <span th:if="${resumo.menorNota} == null">-</span>
+                        </dd>
+
+                        <dt class="col-6">Maior nota</dt>
+                        <dd class="col-6 text-end">
+                            <span th:if="${resumo.maiorNota} != null"
+                                  th:text="${#numbers.formatDecimal(resumo.maiorNota, 1, 2)}">
+                                5,00
+                            </span>
+                            <span th:if="${resumo.maiorNota} == null">-</span>
+                        </dd>
+
+                        <dt class="col-6">Respostas</dt>
+                        <dd class="col-6 text-end" th:text="${resumo.totalRespostas()}">0</dd>
+                    </dl>
+
+                    <p class="text-muted small mt-2 mb-0">
+                        As estatísticas consideram apenas respostas numéricas atribuídas às questões desta avaliação.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <h6 class="card-title mb-3">Notas por questão</h6>
+
+            <div class="table-responsive">
+                <table class="table table-sm table-striped mb-0 align-middle">
+                    <thead>
+                    <tr>
+                        <th>Questão</th>
+                        <th class="text-end" style="width: 120px;">Nota</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(questoes)}">
+                        <td colspan="2" class="text-center text-muted py-3">
+                            Nenhuma resposta registrada para este médico nesta avaliação.
+                        </td>
+                    </tr>
+                    <tr th:each="q : ${questoes}">
+                        <td>
+                                <span th:text="${q.ordem()} + ' - ' + (${q.textoQuestao} ?: '-')">
+                                    Questão 1 - Texto da questão
+                                </span>
+                        </td>
+                        <td class="text-end">
+                                <span th:if="${q.nota} != null"
+                                      th:text="${#numbers.formatDecimal(q.nota, 1, 2)}">
+                                    0,00
+                                </span>
+                            <span th:if="${q.nota} == null">-</span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p class="text-muted small mt-2 mb-0">
+                As notas são calculadas com base nas respostas numéricas atribuídas às questões desta avaliação.
+                Itens qualitativos (comentários) não são considerados neste cálculo.
+            </p>
+        </div>
+    </div>
+
+</div>
+</html>

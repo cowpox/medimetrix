@@ -2,7 +2,6 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR"
       th:replace="~{_layouts/default :: layout(${pageTitle}, ${breadcrumb}, ~{::section})}">
 
-
 <section>
     <!-- Resumo da avaliação -->
     <div class="row mb-4">
@@ -81,12 +80,17 @@
                         </td>
                     </tr>
                     <tr th:each="p : ${participacoes}">
-                        <td th:text="${p.nomeMedico}">Nome do médico</td>
+                        <td>
+                            <a th:href="@{'/app/gestor/relatorios/avaliacoes/' + ${avaliacao.idAvaliacao} + '/medico/' + ${p.idMedico}}"
+                               th:text="${p.nomeMedico}">
+                                Nome do médico
+                            </a>
+                        </td>
                         <td>
                             <span class="badge text-bg-light" th:text="${p.status}">STATUS</span>
                         </td>
                         <td class="text-end"
-                            th:text="${p.notaMedia} != null ? ${p.notaMedia} : '-'">
+                            th:text="${p.notaMedia} != null ? ${#numbers.formatDecimal(p.notaMedia, 1, 2)} : '-'">
                             -
                         </td>
                     </tr>
