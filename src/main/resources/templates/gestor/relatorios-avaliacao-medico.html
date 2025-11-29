@@ -4,6 +4,14 @@
 
 <div th:fragment="content">
 
+    <style>
+        .badge-critico   { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .badge-ruim      { background-color: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
+        .badge-regular   { background-color: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
+        .badge-bom       { background-color: #ecfccb; color: #3f6212; border: 1px solid #d9f99d; }
+        .badge-excelente { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    </style>
+
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="h5 mb-0">Relatório por médico</h2>
         <a th:href="@{'/app/gestor/relatorios/avaliacoes/' + ${resumo.idAvaliacao()}}"
@@ -16,109 +24,88 @@
         <div class="col-md-8">
             <div class="card h-100">
                 <div class="card-body">
-                    <h5 class="card-title mb-3">Relatório por médico</h5>
-
-                    <p class="mb-1">
-                        <strong>Médico: </strong>
-                        <span th:text="${resumo.nomeMedico}">Nome do médico</span>
-                    </p>
-
-                    <p class="mb-1">
-                        <strong>Especialidade: </strong>
-                        <span th:text="${resumo.nomeEspecialidade} ?: '-'">Clínica Médica</span>
-                    </p>
-
-                    <p class="mb-1">
-                        <strong>Unidade: </strong>
-                        <span th:text="${resumo.nomeUnidade} ?: '-'">Unidade X</span>
-                    </p>
-
-                    <p class="mb-1">
-                        <strong>Avaliação: </strong>
-                        <span th:text="${resumo.tituloAvaliacao}">Auto Mar/2025 – Humanização</span>
-                    </p>
-
-                    <p class="mb-1">
-                        <strong>Período: </strong>
-                        <span th:text="${resumo.periodo}">01/03/2025 a 31/03/2025</span>
-                    </p>
-
-                    <p class="mb-0">
-                        <strong>Status: </strong>
-                        <span class="badge"
-                              th:text="${resumo.statusLabel}"
-                              th:classappend="' ' + ${resumo.statusBadgeClass}">
-                    Encerrada
-                </span>
-                    </p>
+                    <h6 class="card-title mb-3">Relatório por médico</h6>
+                    <p class="mb-1"><strong>Médico: </strong><span th:text="${resumo.nomeMedico}">Nome</span></p>
+                    <p class="mb-1"><strong>Especialidade: </strong><span th:text="${resumo.nomeEspecialidade} ?: '-'">-</span></p>
+                    <p class="mb-1"><strong>Unidade: </strong><span th:text="${resumo.nomeUnidade} ?: '-'">-</span></p>
+                    <p class="mb-1"><strong>Avaliação: </strong><span th:text="${resumo.tituloAvaliacao}">-</span></p>
+                    <p class="mb-1"><strong>Período: </strong><span th:text="${resumo.periodo}">-</span></p>
+                    <p class="mb-0"><strong>Status: </strong><span class="badge" th:text="${resumo.statusLabel}" th:classappend="' ' + ${resumo.statusBadgeClass}">-</span></p>
                 </div>
             </div>
         </div>
 
-
-
         <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h6 class="card-title mb-3">Resumo das notas</h6>
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body d-flex flex-column p-3">
 
-                    <div class="mb-3 text-center">
-                        <div class="text-muted small">Nota global</div>
-                        <div class="display-5 fw-semibold">
-                            <span th:if="${resumo.media} != null"
-                                  th:text="${#numbers.formatDecimal(resumo.media, 1, 2)}">
-                                3,90
-                            </span>
-                            <span th:if="${resumo.media} == null">-</span>
+                    <h5 class="text-uppercase text-secondary fw-bold mb-2 text-center" style="letter-spacing: 1px;">
+                        Performance do Médico
+                    </h5>
+
+                    <div class="d-flex justify-content-center mb-0">
+                        <div class="position-relative w-100">
+                            <canvas id="notaGlobalGauge"></canvas>
                         </div>
-                        <div class="text-muted small" th:switch="${resumo.media()}">
-                            <span th:case="null">
-                                Sem nota calculada até o momento.
-                            </span>
-                            <span th:case="*"
-                                  th:text="${resumo.media()} >= 4.0 ? 'Desempenho muito bom' :
-                                           (${resumo.media()} >= 3.0 ? 'Desempenho satisfatório' :
-                                                                       'Desempenho de atenção')">
-                                Desempenho satisfatório
+                    </div>
+
+                    <div class="text-center mb-4">
+                        <div class="display-3 fw-bold text-dark lh-1 mb-0" style="letter-spacing: -2px; margin-top: -5px;">
+                            <span th:text="${resumo.media != null ? #numbers.formatDecimal(resumo.media, 1, 2) : '-'}">0,00</span>
+                        </div>
+
+                        <div th:if="${resumo.media != null}" class="mt-2">
+                            <span class="badge rounded-pill px-3 py-2"
+                                  th:classappend="${resumo.media >= 4.0 ? 'badge-excelente' :
+                                                   (resumo.media >= 3.0 ? 'badge-bom' :
+                                                   (resumo.media >= 2.0 ? 'badge-regular' :
+                                                   (resumo.media >= 1.0 ? 'badge-ruim' : 'badge-critico')))}"
+                                  style="font-size: 0.85rem; font-weight: 600;">
+                                <span th:text="${resumo.media >= 4.0 ? 'Excelente' :
+                                               (resumo.media >= 3.0 ? 'Satisfatório' :
+                                               (resumo.media >= 2.0 ? 'Regular' :
+                                               (resumo.media >= 1.0 ? 'Ruim' : 'Crítico')))}">
+                                    Status
+                                </span>
                             </span>
                         </div>
                     </div>
 
-                    <dl class="row mb-0 small">
-                        <dt class="col-6">Média</dt>
-                        <dd class="col-6 text-end">
-                            <span th:if="${resumo.media} != null"
-                                  th:text="${#numbers.formatDecimal(resumo.media, 1, 2)}">
-                                3,90
-                            </span>
-                            <span th:if="${resumo.media} == null">-</span>
-                        </dd>
+                    <div class="mt-2">
+                        <div class="mb-2">
+                            <span class="small fw-bold text-muted text-uppercase" style="font-size: 0.75rem;">Comparativo (Grupo)</span>
+                        </div>
 
-                        <dt class="col-6">Menor nota</dt>
-                        <dd class="col-6 text-end">
-                            <span th:if="${resumo.menorNota} != null"
-                                  th:text="${#numbers.formatDecimal(resumo.menorNota, 1, 2)}">
-                                2,00
-                            </span>
-                            <span th:if="${resumo.menorNota} == null">-</span>
-                        </dd>
+                        <div class="vstack gap-2">
+                            <div class="d-flex justify-content-between align-items-center p-2 rounded-2" style="background-color: #fff5f5;">
+                                <div class="d-flex align-items-center">
+                                    <span class="d-inline-block rounded-circle me-2" style="width: 8px; height: 8px; background-color: #dc3545;"></span>
+                                    <span class="small text-danger fw-bold">Mínima</span>
+                                </div>
+                                <span class="fw-bold text-danger small"
+                                      th:text="${resumo.menorNotaGrupo != null ? #numbers.formatDecimal(resumo.menorNotaGrupo, 1, 2) : '-'}">0,00</span>
+                            </div>
 
-                        <dt class="col-6">Maior nota</dt>
-                        <dd class="col-6 text-end">
-                            <span th:if="${resumo.maiorNota} != null"
-                                  th:text="${#numbers.formatDecimal(resumo.maiorNota, 1, 2)}">
-                                5,00
-                            </span>
-                            <span th:if="${resumo.maiorNota} == null">-</span>
-                        </dd>
+                            <div class="d-flex justify-content-between align-items-center p-2 rounded-2" style="background-color: #f0f7ff;">
+                                <div class="d-flex align-items-center">
+                                    <span class="d-inline-block rounded-circle me-2" style="width: 8px; height: 8px; background-color: #0d6efd;"></span>
+                                    <span class="small text-primary fw-bold">Média</span>
+                                </div>
+                                <span class="fw-bold text-primary small"
+                                      th:text="${resumo.mediaGrupo != null ? #numbers.formatDecimal(resumo.mediaGrupo, 1, 2) : '-'}">0,00</span>
+                            </div>
 
-                        <dt class="col-6">Respostas</dt>
-                        <dd class="col-6 text-end" th:text="${resumo.totalRespostas()}">0</dd>
-                    </dl>
+                            <div class="d-flex justify-content-between align-items-center p-2 rounded-2" style="background-color: #f0fdf4;">
+                                <div class="d-flex align-items-center">
+                                    <span class="d-inline-block rounded-circle me-2" style="width: 8px; height: 8px; background-color: #198754;"></span>
+                                    <span class="small text-success fw-bold">Máxima</span>
+                                </div>
+                                <span class="fw-bold text-success small"
+                                      th:text="${resumo.maiorNotaGrupo != null ? #numbers.formatDecimal(resumo.maiorNotaGrupo, 1, 2) : '-'}">0,00</span>
+                            </div>
+                        </div>
+                    </div>
 
-                    <p class="text-muted small mt-2 mb-0">
-                        As estatísticas consideram apenas respostas numéricas atribuídas às questões desta avaliação.
-                    </p>
                 </div>
             </div>
         </div>
@@ -127,45 +114,264 @@
     <div class="card">
         <div class="card-body">
             <h6 class="card-title mb-3">Notas por questão</h6>
-
             <div class="table-responsive">
-                <table class="table table-sm table-striped mb-0 align-middle">
+                <table class="table table-sm table-hover mb-0 align-middle">
                     <thead>
                     <tr>
                         <th>Questão</th>
+                        <th style="width: 300px;">Performance (Escala 0-5)</th>
                         <th class="text-end" style="width: 120px;">Nota</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr th:if="${#lists.isEmpty(questoes)}">
-                        <td colspan="2" class="text-center text-muted py-3">
-                            Nenhuma resposta registrada para este médico nesta avaliação.
+                        <td colspan="3" class="text-center text-muted py-3">
+                            Nenhuma resposta registrada.
                         </td>
                     </tr>
                     <tr th:each="q : ${questoes}">
                         <td>
-                                <span th:text="${q.ordem()} + ' - ' + (${q.textoQuestao} ?: '-')">
-                                    Questão 1 - Texto da questão
-                                </span>
+                            <span th:text="${q.ordem()} + ' - ' + (${q.textoQuestao} ?: '-')">Q</span>
                         </td>
+
+                        <td class="py-2">
+                            <div style="height: 35px; width: 100%;">
+                                <canvas th:id="'chart-Q' + ${q.ordem()}"></canvas>
+                            </div>
+                        </td>
+
                         <td class="text-end">
-                                <span th:if="${q.nota} != null"
-                                      th:text="${#numbers.formatDecimal(q.nota, 1, 2)}">
-                                    0,00
-                                </span>
-                            <span th:if="${q.nota} == null">-</span>
+                            <span th:if="${q.nota != null}">
+                                <span th:if="${q.notaMaxima != null}" th:text="|${#numbers.formatDecimal(q.nota, 1, 2)} / ${#numbers.formatDecimal(q.notaMaxima, 1, 2)}|"></span>
+                                <span th:if="${q.notaMaxima == null}" th:text="${#numbers.formatDecimal(q.nota, 1, 2)}"></span>
+                            </span>
+                            <span th:if="${q.nota == null}" class="text-muted">-</span>
                         </td>
                     </tr>
                     </tbody>
                 </table>
             </div>
-
-            <p class="text-muted small mt-2 mb-0">
-                As notas são calculadas com base nas respostas numéricas atribuídas às questões desta avaliação.
-                Itens qualitativos (comentários) não são considerados neste cálculo.
-            </p>
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        document.addEventListener('DOMContentLoaded', function () {
+
+            // -------------------------------------------------------------
+            // 1. GAUGE CHART (MANTIDO)
+            // -------------------------------------------------------------
+            const gaugeCanvas = document.getElementById('notaGlobalGauge');
+            if (gaugeCanvas) {
+                const maxGauge = 5;
+                const notaMedico = /*[[${resumo.media != null ? resumo.media : 0}]]*/ 0;
+                const mediaGrupo = /*[[${resumo.mediaGrupo != null ? resumo.mediaGrupo : null}]]*/ null;
+                const minGrupo   = /*[[${resumo.menorNotaGrupo != null ? resumo.menorNotaGrupo : null}]]*/ null;
+                const maxGrupo   = /*[[${resumo.maiorNotaGrupo != null ? resumo.maiorNotaGrupo : null}]]*/ null;
+
+                const markers = [
+                    { value: minGrupo,   color: '#dc3545' },
+                    { value: mediaGrupo, color: '#0d6efd' },
+                    { value: maxGrupo,   color: '#198754' }
+                ].filter(m => m.value !== null);
+
+                const toAngle = (value) => {
+                    const safe = Math.max(0, Math.min(value, maxGauge));
+                    const ratio = safe / maxGauge;
+                    return Math.PI + (ratio * Math.PI);
+                };
+
+                new Chart(gaugeCanvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ["0-1", "1-2", "2-3", "3-4", "4-5"],
+                        datasets: [{
+                            data: [1, 1, 1, 1, 1],
+                            backgroundColor: ['#ef4444', '#f97316', '#eab308', '#84cc16', '#22c55e'],
+                            borderColor: '#ffffff', borderWidth: 4, hoverOffset: 0
+                        }]
+                    },
+                    options: {
+                        rotation: -90, circumference: 180, cutout: '70%', aspectRatio: 2,
+                        responsive: true, maintainAspectRatio: true,
+                        layout: { padding: { top: 35, bottom: 10, left: 15, right: 15 } },
+                        plugins: { legend: { display: false }, tooltip: { enabled: false } }
+                    },
+                    plugins: [{
+                        id: 'markersAndNeedle',
+                        afterDraw(chart) {
+                            const ctx = chart.ctx;
+                            const meta = chart.getDatasetMeta(0);
+                            const arc = meta.data[0];
+                            const cx = arc.x;
+                            const cy = arc.y;
+                            const outerRadius = arc.outerRadius;
+
+                            const angleMedico = toAngle(notaMedico);
+                            const needleLen = outerRadius - 5;
+                            ctx.save();
+                            ctx.lineWidth = 5; ctx.strokeStyle = '#212529'; ctx.lineCap = 'round';
+                            ctx.beginPath(); ctx.moveTo(cx, cy);
+                            const nx = cx + needleLen * Math.cos(angleMedico);
+                            const ny = cy + needleLen * Math.sin(angleMedico);
+                            ctx.lineTo(nx, ny); ctx.stroke();
+                            ctx.fillStyle = '#212529'; ctx.beginPath(); ctx.arc(cx, cy, 7, 0, 2 * Math.PI); ctx.fill();
+
+                            markers.forEach(m => {
+                                const a = toAngle(m.value);
+                                const tipRadius = outerRadius + 4; const baseRadius = outerRadius + 14;
+                                const tipX = cx + tipRadius * Math.cos(a); const tipY = cy + tipRadius * Math.sin(a);
+                                const angleOffset = 0.05;
+                                const baseX1 = cx + baseRadius * Math.cos(a - angleOffset); const baseY1 = cy + baseRadius * Math.sin(a - angleOffset);
+                                const baseX2 = cx + baseRadius * Math.cos(a + angleOffset); const baseY2 = cy + baseRadius * Math.sin(a + angleOffset);
+                                ctx.fillStyle = m.color; ctx.beginPath(); ctx.moveTo(tipX, tipY); ctx.lineTo(baseX1, baseY1); ctx.lineTo(baseX2, baseY2); ctx.closePath(); ctx.fill();
+                            });
+                            ctx.restore();
+                        }
+                    }]
+                });
+            }
+
+            // -------------------------------------------------------------
+            // 2. GRÁFICOS DE LINHA - ESTRATÉGIA SCATTER (CORREÇÃO FINAL)
+            // -------------------------------------------------------------
+            const questionChartsData = [];
+
+            /*[# th:each="q : ${questoes}"]*/
+            (function() {
+                const canvasId = 'chart-Q' + /*[[${q.ordem()}]]*/ '';
+                const nota = /*[[${q.nota}]]*/ null;
+                const max = /*[[${q.notaMaxima}]]*/ null;
+
+                const valMinGrupo = /*[[${q.notaGrupoMin}]]*/ null;
+                const valMaxGrupo = /*[[${q.notaGrupoMax}]]*/ null;
+                const valMediaGrupo = /*[[${q.notaGrupoMedia}]]*/ null;
+
+                let notaNormalizada = null;
+                if (nota != null && max != null && max > 0) {
+                    notaNormalizada = (Number(nota) * 5) / Number(max);
+                }
+
+                questionChartsData.push({
+                    canvasId: canvasId,
+                    notaMedico: notaNormalizada,
+                    gMin: valMinGrupo,
+                    gMax: valMaxGrupo,
+                    gMedia: valMediaGrupo,
+                    rawNota: nota,
+                    rawMax: max
+                });
+            })();
+            /*[/]*/
+
+            function createRowChart(config) {
+                const canvas = document.getElementById(config.canvasId);
+                if (!canvas) return;
+
+                // Cálculos das fatias
+                const valMin = config.gMin || 0;
+                const valMax = config.gMax || 0;
+                const sliceRed = valMin;
+                const sliceYellow = Math.max(0, valMax - valMin);
+                const sliceGreen = Math.max(0, 5 - valMax);
+
+                new Chart(canvas, {
+                    type: 'bar',
+                    data: {
+                        labels: [''],
+                        datasets: [
+                            // -------------------------------------------------------------
+                            // 1. FUNDO COLORIDO (CORES MAIS VIVAS)
+                            // -------------------------------------------------------------
+                            {
+                                label: 'Abaixo do Grupo',
+                                data: [sliceRed],
+                                backgroundColor: '#ffb3b3', // Vermelho mais vivo (era #fee2e2)
+                                barPercentage: 0.6, categoryPercentage: 1.0,
+                                stack: 'background', order: 10,
+                                borderSkipped: false, borderRadius: {topLeft: 4, bottomLeft: 4}
+                            },
+                            {
+                                label: 'Faixa do Grupo',
+                                data: [sliceYellow],
+                                backgroundColor: '#ffe680', // Amarelo mais vivo (era #fef9c3)
+                                barPercentage: 0.6, categoryPercentage: 1.0,
+                                stack: 'background', order: 10
+                            },
+                            {
+                                label: 'Acima do Grupo',
+                                data: [sliceGreen],
+                                backgroundColor: '#99e699', // Verde mais vivo (era #dcfce7)
+                                barPercentage: 0.6, categoryPercentage: 1.0,
+                                stack: 'background', order: 10,
+                                borderSkipped: false, borderRadius: {topRight: 4, bottomRight: 4}
+                            },
+
+                            // -------------------------------------------------------------
+                            // 2. MÉDIA (Traço Azul)
+                            // -------------------------------------------------------------
+                            {
+                                label: 'Média do Grupo',
+                                type: 'bar',
+                                data: config.gMedia !== null ? [ [config.gMedia - 0.02, config.gMedia + 0.02] ] : [],
+                                backgroundColor: '#0d6efd', // Azul forte
+                                barPercentage: 1.0, categoryPercentage: 1.0,
+                                stack: 'overlay', order: 5, borderRadius: 1
+                            },
+
+                            // -------------------------------------------------------------
+                            // 3. NOTA DO MÉDICO (Triângulo voltado para baixo)
+                            // -------------------------------------------------------------
+                            {
+                                label: 'Sua Nota',
+                                type: 'scatter',
+                                data: config.notaMedico !== null ? [{x: config.notaMedico, y: 0}] : [],
+                                pointStyle: 'triangle',
+                                backgroundColor: '#212529', borderColor: '#212529',
+                                pointRadius: 7,
+                                rotation: 180, // Aponta para baixo (original)
+                                order: 0
+                            }
+                        ]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: '#1e293b', titleFont: { size: 11 }, bodyFont: { size: 11 },
+                                padding: 8, cornerRadius: 4, displayColors: false,
+                                callbacks: {
+                                    title: () => null,
+                                    label(context) {
+                                        if (context.dataset.type === 'scatter') return `👨‍⚕️ Sua Nota: ${Number(config.rawNota).toFixed(2)}`;
+                                        if (context.dataset.label === 'Média do Grupo') return `🔵 Média do Grupo: ${config.gMedia?.toFixed(2)}`;
+                                        if (context.dataset.label === 'Faixa do Grupo') return `👥 Faixa do Grupo: ${config.gMin?.toFixed(2)} a ${config.gMax?.toFixed(2)}`;
+                                        return null;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                min: 0, max: 5,
+                                grid: { display: false }, ticks: { display: false }, stacked: true
+                            },
+                            y: {
+                                stacked: true, grid: { display: false, drawBorder: false }, ticks: { display: false }
+                            }
+                        },
+                        layout: { padding: { left: 0, right: 0, top: 5, bottom: 5 } }
+                    }
+                });
+            }
+
+            questionChartsData.forEach(data => createRowChart(data));
+        });
+        /*]]>*/
+    </script>
 </div>
 </html>
