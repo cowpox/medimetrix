@@ -4,5 +4,6 @@ import java.util.List;
 
 public record RelatorioAvaliacaoMedicoVM(
         AvaliacaoMedicoResumoVM resumo,
-        List<QuestaoNotaVM> questoes
+        List<QuestaoNotaVM> questoes,
+        List<CriterioRadarVM> criterios
 ) {}

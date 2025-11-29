@@ -5,11 +5,35 @@
 <div th:fragment="content">
 
     <style>
-        .badge-critico   { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-        .badge-ruim      { background-color: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
-        .badge-regular   { background-color: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
-        .badge-bom       { background-color: #ecfccb; color: #3f6212; border: 1px solid #d9f99d; }
-        .badge-excelente { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .badge-critico {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .badge-ruim {
+            background-color: #ffedd5;
+            color: #9a3412;
+            border: 1px solid #fed7aa;
+        }
+
+        .badge-regular {
+            background-color: #fef9c3;
+            color: #854d0e;
+            border: 1px solid #fde047;
+        }
+
+        .badge-bom {
+            background-color: #ecfccb;
+            color: #3f6212;
+            border: 1px solid #d9f99d;
+        }
+
+        .badge-excelente {
+            background-color: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
     </style>
 
     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -25,12 +49,34 @@
             <div class="card h-100">
                 <div class="card-body">
                     <h6 class="card-title mb-3">Relatório por médico</h6>
-                    <p class="mb-1"><strong>Médico: </strong><span th:text="${resumo.nomeMedico}">Nome</span></p>
-                    <p class="mb-1"><strong>Especialidade: </strong><span th:text="${resumo.nomeEspecialidade} ?: '-'">-</span></p>
-                    <p class="mb-1"><strong>Unidade: </strong><span th:text="${resumo.nomeUnidade} ?: '-'">-</span></p>
-                    <p class="mb-1"><strong>Avaliação: </strong><span th:text="${resumo.tituloAvaliacao}">-</span></p>
-                    <p class="mb-1"><strong>Período: </strong><span th:text="${resumo.periodo}">-</span></p>
-                    <p class="mb-0"><strong>Status: </strong><span class="badge" th:text="${resumo.statusLabel}" th:classappend="' ' + ${resumo.statusBadgeClass}">-</span></p>
+                    <p class="mb-1">
+                        <strong>Médico: </strong>
+                        <span th:text="${resumo.nomeMedico}">Nome</span>
+                    </p>
+                    <p class="mb-1">
+                        <strong>Especialidade: </strong>
+                        <span th:text="${resumo.nomeEspecialidade} ?: '-'">-</span>
+                    </p>
+                    <p class="mb-1">
+                        <strong>Unidade: </strong>
+                        <span th:text="${resumo.nomeUnidade} ?: '-'">-</span>
+                    </p>
+                    <p class="mb-1">
+                        <strong>Avaliação: </strong>
+                        <span th:text="${resumo.tituloAvaliacao}">-</span>
+                    </p>
+                    <p class="mb-1">
+                        <strong>Período: </strong>
+                        <span th:text="${resumo.periodo}">-</span>
+                    </p>
+                    <p class="mb-0">
+                        <strong>Status: </strong>
+                        <span class="badge"
+                              th:text="${resumo.statusLabel}"
+                              th:classappend="' ' + ${resumo.statusBadgeClass}">
+                            -
+                        </span>
+                    </p>
                 </div>
             </div>
         </div>
@@ -73,7 +119,9 @@
 
                     <div class="mt-2">
                         <div class="mb-2">
-                            <span class="small fw-bold text-muted text-uppercase" style="font-size: 0.75rem;">Comparativo (Grupo)</span>
+                            <span class="small fw-bold text-muted text-uppercase" style="font-size: 0.75rem;">
+                                Comparativo (Grupo)
+                            </span>
                         </div>
 
                         <div class="vstack gap-2">
@@ -125,26 +173,22 @@
                     </thead>
                     <tbody>
                     <tr th:if="${#lists.isEmpty(questoes)}">
-                        <td colspan="3" class="text-center text-muted py-3">
-                            Nenhuma resposta registrada.
-                        </td>
+                        <td colspan="3" class="text-center text-muted py-3">Nenhuma resposta registrada.</td>
                     </tr>
                     <tr th:each="q : ${questoes}">
                         <td>
                             <span th:text="${q.ordem()} + ' - ' + (${q.textoQuestao} ?: '-')">Q</span>
                         </td>
-
                         <td class="py-2">
                             <div style="height: 35px; width: 100%;">
                                 <canvas th:id="'chart-Q' + ${q.ordem()}"></canvas>
                             </div>
                         </td>
-
                         <td class="text-end">
-                            <span th:if="${q.nota != null}">
-                                <span th:if="${q.notaMaxima != null}" th:text="|${#numbers.formatDecimal(q.nota, 1, 2)} / ${#numbers.formatDecimal(q.notaMaxima, 1, 2)}|"></span>
-                                <span th:if="${q.notaMaxima == null}" th:text="${#numbers.formatDecimal(q.nota, 1, 2)}"></span>
-                            </span>
+                                <span th:if="${q.nota != null}">
+                                    <span th:if="${q.notaMaxima != null}" th:text="|${#numbers.formatDecimal(q.nota, 1, 2)} / ${#numbers.formatDecimal(q.notaMaxima, 1, 2)}|"></span>
+                                    <span th:if="${q.notaMaxima == null}" th:text="${#numbers.formatDecimal(q.nota, 1, 2)}"></span>
+                                </span>
                             <span th:if="${q.nota == null}" class="text-muted">-</span>
                         </td>
                     </tr>
@@ -154,27 +198,91 @@
         </div>
     </div>
 
+<!--    Card: Radar-->
+    <div class="card mb-4 mt-4" th:if="${criterios != null and !#lists.isEmpty(criterios)}">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-baseline mb-1">
+                <h3 class="h6 mb-0">Performance por critério</h3>
+                <span class="text-muted small">Escala 0 – 5</span>
+            </div>
+
+            <p class="text-muted small mb-3">
+                Comparativo entre o médico avaliado e a média do grupo em cada critério.
+            </p>
+
+            <div class="d-flex justify-content-center">
+                <div style="width: 100%; max-width: 1200px; height: 520px; margin: 0 auto;">
+                    <canvas id="radarComparativo"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ========================================================= -->
+    <!-- Card: Insights avançados / Analytics                      -->
+    <!-- ========================================================= -->
+    <div class="card mb-4" th:if="${criterios != null and !#lists.isEmpty(criterios)}">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-baseline mb-1">
+                <h3 class="h6 mb-0">Insights avançados</h3>
+                <span class="badge bg-info-subtle text-info-emphasis small">Beta</span>
+            </div>
+
+            <p class="text-muted small mb-3">
+                Análise automática do desempenho do médico em comparação ao grupo.
+                Os textos abaixo são gerados a partir dos resultados numéricos desta avaliação.
+            </p>
+
+            <button id="btnInsights"
+                    type="button"
+                    class="btn btn-primary btn-sm mb-3">
+                <span id="insightsSpinner"
+                      class="spinner-border spinner-border-sm me-2 d-none"
+                      role="status"
+                      aria-hidden="true"></span>
+                Gerar insights
+            </button>
+
+            <div id="insightsError" class="alert alert-danger d-none small mb-3"></div>
+
+            <div id="insightsContent" class="small" style="line-height: 1.5;">
+                <p class="text-muted mb-0">
+                    Clique em <strong>“Gerar insights”</strong> para visualizar a interpretação automática deste relatório.
+                </p>
+            </div>
+        </div>
+    </div>
+
+
+
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script th:inline="javascript">
         /*<![CDATA[*/
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
 
-            // -------------------------------------------------------------
-            // 1. GAUGE CHART (MANTIDO)
-            // -------------------------------------------------------------
+            // =============================================
+            // 1. GAUGE CHART (VELOCÍMETRO)
+            // =============================================
             const gaugeCanvas = document.getElementById('notaGlobalGauge');
             if (gaugeCanvas) {
                 const maxGauge = 5;
                 const notaMedico = /*[[${resumo.media != null ? resumo.media : 0}]]*/ 0;
                 const mediaGrupo = /*[[${resumo.mediaGrupo != null ? resumo.mediaGrupo : null}]]*/ null;
-                const minGrupo   = /*[[${resumo.menorNotaGrupo != null ? resumo.menorNotaGrupo : null}]]*/ null;
-                const maxGrupo   = /*[[${resumo.maiorNotaGrupo != null ? resumo.maiorNotaGrupo : null}]]*/ null;
+                const minGrupo = /*[[${resumo.menorNotaGrupo != null ? resumo.menorNotaGrupo : null}]]*/ null;
+                const maxGrupo = /*[[${resumo.maiorNotaGrupo != null ? resumo.maiorNotaGrupo : null}]]*/ null;
 
-                const markers = [
-                    { value: minGrupo,   color: '#dc3545' },
-                    { value: mediaGrupo, color: '#0d6efd' },
-                    { value: maxGrupo,   color: '#198754' }
-                ].filter(m => m.value !== null);
+                const markers = [{
+                    value: minGrupo,
+                    color: '#dc3545'
+                }, {
+                    value: mediaGrupo,
+                    color: '#0d6efd'
+                }, {
+                    value: maxGrupo,
+                    color: '#198754'
+                }].filter(m => m.value !== null);
 
                 const toAngle = (value) => {
                     const safe = Math.max(0, Math.min(value, maxGauge));
@@ -189,14 +297,34 @@
                         datasets: [{
                             data: [1, 1, 1, 1, 1],
                             backgroundColor: ['#ef4444', '#f97316', '#eab308', '#84cc16', '#22c55e'],
-                            borderColor: '#ffffff', borderWidth: 4, hoverOffset: 0
+                            borderColor: '#ffffff',
+                            borderWidth: 4,
+                            hoverOffset: 0
                         }]
                     },
                     options: {
-                        rotation: -90, circumference: 180, cutout: '70%', aspectRatio: 2,
-                        responsive: true, maintainAspectRatio: true,
-                        layout: { padding: { top: 35, bottom: 10, left: 15, right: 15 } },
-                        plugins: { legend: { display: false }, tooltip: { enabled: false } }
+                        rotation: -90,
+                        circumference: 180,
+                        cutout: '70%',
+                        aspectRatio: 2,
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        layout: {
+                            padding: {
+                                top: 35,
+                                bottom: 10,
+                                left: 15,
+                                right: 15
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                enabled: false
+                            }
+                        }
                     },
                     plugins: [{
                         id: 'markersAndNeedle',
@@ -211,21 +339,38 @@
                             const angleMedico = toAngle(notaMedico);
                             const needleLen = outerRadius - 5;
                             ctx.save();
-                            ctx.lineWidth = 5; ctx.strokeStyle = '#212529'; ctx.lineCap = 'round';
-                            ctx.beginPath(); ctx.moveTo(cx, cy);
+                            ctx.lineWidth = 5;
+                            ctx.strokeStyle = '#212529';
+                            ctx.lineCap = 'round';
+                            ctx.beginPath();
+                            ctx.moveTo(cx, cy);
                             const nx = cx + needleLen * Math.cos(angleMedico);
                             const ny = cy + needleLen * Math.sin(angleMedico);
-                            ctx.lineTo(nx, ny); ctx.stroke();
-                            ctx.fillStyle = '#212529'; ctx.beginPath(); ctx.arc(cx, cy, 7, 0, 2 * Math.PI); ctx.fill();
+                            ctx.lineTo(nx, ny);
+                            ctx.stroke();
+                            ctx.fillStyle = '#212529';
+                            ctx.beginPath();
+                            ctx.arc(cx, cy, 7, 0, 2 * Math.PI);
+                            ctx.fill();
 
                             markers.forEach(m => {
                                 const a = toAngle(m.value);
-                                const tipRadius = outerRadius + 4; const baseRadius = outerRadius + 14;
-                                const tipX = cx + tipRadius * Math.cos(a); const tipY = cy + tipRadius * Math.sin(a);
+                                const tipRadius = outerRadius + 4;
+                                const baseRadius = outerRadius + 14;
+                                const tipX = cx + tipRadius * Math.cos(a);
+                                const tipY = cy + tipRadius * Math.sin(a);
                                 const angleOffset = 0.05;
-                                const baseX1 = cx + baseRadius * Math.cos(a - angleOffset); const baseY1 = cy + baseRadius * Math.sin(a - angleOffset);
-                                const baseX2 = cx + baseRadius * Math.cos(a + angleOffset); const baseY2 = cy + baseRadius * Math.sin(a + angleOffset);
-                                ctx.fillStyle = m.color; ctx.beginPath(); ctx.moveTo(tipX, tipY); ctx.lineTo(baseX1, baseY1); ctx.lineTo(baseX2, baseY2); ctx.closePath(); ctx.fill();
+                                const baseX1 = cx + baseRadius * Math.cos(a - angleOffset);
+                                const baseY1 = cy + baseRadius * Math.sin(a - angleOffset);
+                                const baseX2 = cx + baseRadius * Math.cos(a + angleOffset);
+                                const baseY2 = cy + baseRadius * Math.sin(a + angleOffset);
+                                ctx.fillStyle = m.color;
+                                ctx.beginPath();
+                                ctx.moveTo(tipX, tipY);
+                                ctx.lineTo(baseX1, baseY1);
+                                ctx.lineTo(baseX2, baseY2);
+                                ctx.closePath();
+                                ctx.fill();
                             });
                             ctx.restore();
                         }
@@ -233,9 +378,9 @@
                 });
             }
 
-            // -------------------------------------------------------------
-            // 2. GRÁFICOS DE LINHA - ESTRATÉGIA SCATTER (CORREÇÃO FINAL)
-            // -------------------------------------------------------------
+            // =============================================
+            // 2. GRÁFICOS HORIZONTAIS DA TABELA
+            // =============================================
             const questionChartsData = [];
 
             /*[# th:each="q : ${questoes}"]*/
@@ -281,56 +426,73 @@
                     data: {
                         labels: [''],
                         datasets: [
-                            // -------------------------------------------------------------
-                            // 1. FUNDO COLORIDO (CORES MAIS VIVAS)
-                            // -------------------------------------------------------------
+                            // FUNDO COLORIDO (CORES MAIS VIVAS)
                             {
                                 label: 'Abaixo do Grupo',
                                 data: [sliceRed],
-                                backgroundColor: '#ffb3b3', // Vermelho mais vivo (era #fee2e2)
-                                barPercentage: 0.6, categoryPercentage: 1.0,
-                                stack: 'background', order: 10,
-                                borderSkipped: false, borderRadius: {topLeft: 4, bottomLeft: 4}
+                                backgroundColor: '#ffb3b3', // Vermelho mais vivo
+                                barPercentage: 0.6,
+                                categoryPercentage: 1.0,
+                                stack: 'background',
+                                order: 10,
+                                borderSkipped: false,
+                                borderRadius: {
+                                    topLeft: 4,
+                                    bottomLeft: 4
+                                }
                             },
                             {
                                 label: 'Faixa do Grupo',
                                 data: [sliceYellow],
-                                backgroundColor: '#ffe680', // Amarelo mais vivo (era #fef9c3)
-                                barPercentage: 0.6, categoryPercentage: 1.0,
-                                stack: 'background', order: 10
+                                backgroundColor: '#ffe680', // Amarelo mais vivo
+                                barPercentage: 0.6,
+                                categoryPercentage: 1.0,
+                                stack: 'background',
+                                order: 10
                             },
                             {
                                 label: 'Acima do Grupo',
                                 data: [sliceGreen],
-                                backgroundColor: '#99e699', // Verde mais vivo (era #dcfce7)
-                                barPercentage: 0.6, categoryPercentage: 1.0,
-                                stack: 'background', order: 10,
-                                borderSkipped: false, borderRadius: {topRight: 4, bottomRight: 4}
+                                backgroundColor: '#99e699', // Verde mais vivo
+                                barPercentage: 0.6,
+                                categoryPercentage: 1.0,
+                                stack: 'background',
+                                order: 10,
+                                borderSkipped: false,
+                                borderRadius: {
+                                    topRight: 4,
+                                    bottomRight: 4
+                                }
                             },
 
-                            // -------------------------------------------------------------
-                            // 2. MÉDIA (Traço Azul)
-                            // -------------------------------------------------------------
+                            // MÉDIA (Traço Azul)
                             {
                                 label: 'Média do Grupo',
                                 type: 'bar',
-                                data: config.gMedia !== null ? [ [config.gMedia - 0.02, config.gMedia + 0.02] ] : [],
-                                backgroundColor: '#0d6efd', // Azul forte
-                                barPercentage: 1.0, categoryPercentage: 1.0,
-                                stack: 'overlay', order: 5, borderRadius: 1
+                                data: config.gMedia !== null ? [
+                                    [config.gMedia - 0.02, config.gMedia + 0.02]
+                                ] : [],
+                                backgroundColor: '#0d6efd',
+                                barPercentage: 1.0,
+                                categoryPercentage: 1.0,
+                                stack: 'overlay',
+                                order: 5,
+                                borderRadius: 1
                             },
 
-                            // -------------------------------------------------------------
-                            // 3. NOTA DO MÉDICO (Triângulo voltado para baixo)
-                            // -------------------------------------------------------------
+                            // NOTA DO MÉDICO (Triângulo voltado para cima)
                             {
                                 label: 'Sua Nota',
                                 type: 'scatter',
-                                data: config.notaMedico !== null ? [{x: config.notaMedico, y: 0}] : [],
+                                data: config.notaMedico !== null ? [{
+                                    x: config.notaMedico,
+                                    y: -0.8
+                                }] : [],
                                 pointStyle: 'triangle',
-                                backgroundColor: '#212529', borderColor: '#212529',
+                                backgroundColor: '#212529',
+                                borderColor: '#212529',
                                 pointRadius: 7,
-                                rotation: 180, // Aponta para baixo (original)
+                                rotation: 0,
                                 order: 0
                             }
                         ]
@@ -340,10 +502,20 @@
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: { display: false },
+                            legend: {
+                                display: false
+                            },
                             tooltip: {
-                                backgroundColor: '#1e293b', titleFont: { size: 11 }, bodyFont: { size: 11 },
-                                padding: 8, cornerRadius: 4, displayColors: false,
+                                backgroundColor: '#1e293b',
+                                titleFont: {
+                                    size: 11
+                                },
+                                bodyFont: {
+                                    size: 11
+                                },
+                                padding: 8,
+                                cornerRadius: 4,
+                                displayColors: false,
                                 callbacks: {
                                     title: () => null,
                                     label(context) {
@@ -357,20 +529,242 @@
                         },
                         scales: {
                             x: {
-                                min: 0, max: 5,
-                                grid: { display: false }, ticks: { display: false }, stacked: true
+                                min: 0,
+                                max: 5,
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    display: false
+                                },
+                                stacked: true
                             },
                             y: {
-                                stacked: true, grid: { display: false, drawBorder: false }, ticks: { display: false }
+                                stacked: true,
+                                grid: {
+                                    display: false,
+                                    drawBorder: false
+                                },
+                                ticks: {
+                                    display: false
+                                }
                             }
                         },
-                        layout: { padding: { left: 0, right: 0, top: 5, bottom: 5 } }
+                        layout: {
+                            padding: {
+                                left: 0,
+                                right: 0,
+                                top: 5,
+                                bottom: 5
+                            }
+                        }
                     }
                 });
             }
 
             questionChartsData.forEach(data => createRowChart(data));
-        });
+
+            // =============================================
+            // 3. RADAR COMPARATIVO (BOLINHAS CHEIAS E ESPAÇAMENTO CORRIGIDO)
+            // =============================================
+            const criteriosLabels  = /*[[${criterios.![nomeCriterio]}]]*/ [];
+            const criteriosMedico  = /*[[${criterios.![notaMedico]}]]*/ [];
+            const criteriosGrupo   = /*[[${criterios.![notaGrupo]}]]*/ [];
+
+            const radarComparativoEl = document.getElementById('radarComparativo');
+
+            if (radarComparativoEl && criteriosLabels.length > 0) {
+
+                // 1. PLUGIN PARA DAR MARGEM EMBAIXO DA LEGENDA
+                const legendMargin = {
+                    id: 'legendMargin',
+                    beforeInit(chart) {
+                        const originalFit = chart.legend.fit;
+                        chart.legend.fit = function fit() {
+                            originalFit.bind(chart.legend)();
+                            this.height += 50; // Aumenta o espaço entre legenda e gráfico
+                        };
+                    }
+                };
+
+                // 2. AJUSTE NAS BOLINHAS (CHEIAS)
+                const commonPointSettings = {
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    pointBorderWidth: 2
+                    // Removido: pointBackgroundColor: '#fff' (agora fica cheio)
+                };
+
+                new Chart(radarComparativoEl, {
+                    type: 'radar',
+                    plugins: [legendMargin],
+                    data: {
+                        labels: criteriosLabels,
+                        datasets: [
+                            {
+                                label: '   Médico   ',
+                                data: criteriosMedico,
+                                fill: true,
+                                backgroundColor: 'rgba(10, 75, 155, 0.25)',
+                                borderColor: '#0A4B9B', borderWidth: 3, pointBorderColor: '#0A4B9B',
+                                pointBackgroundColor: '#0A4B9B', // Garante que o fundo seja azul
+                                ...commonPointSettings
+                            },
+                            {
+                                label: '   Grupo   ',
+                                data: criteriosGrupo,
+                                fill: true,
+                                backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                                borderColor: '#10b981', borderWidth: 2, pointBorderColor: '#10b981',
+                                pointBackgroundColor: '#10b981', // Garante que o fundo seja verde
+                                borderDash: [5, 5],
+                                ...commonPointSettings
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: {
+                            // Zera o topo para colar a legenda no subtítulo do HTML
+                            padding: { top: 0, bottom: 20, left: 20, right: 20 }
+                        },
+                        elements: { line: { tension: 0.1 } },
+                        scales: {
+                            r: {
+                                beginAtZero: true, max: 5, min: 0,
+                                ticks: { stepSize: 1, color: '#9ca3af', showLabelBackdrop: false, font: { size: 11 } },
+                                grid: { color: 'rgba(148, 163, 184, 0.2)', circular: true },
+                                angleLines: { color: 'rgba(148, 163, 184, 0.2)' },
+                                pointLabels: { font: { size: 16, weight: '600' }, color: '#4b5563', padding: 15 }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                align: 'center',
+                                labels: {
+                                    usePointStyle: true,
+                                    font: { size: 16 },
+                                    boxWidth: 15,
+                                    padding: 20
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: '#1e293b', padding: 12, titleFont: { size: 13 }, bodyFont: { size: 13 },
+                                callbacks: {
+                                    label: function (context) {
+                                        return `${context.dataset.label.trim()}: ${context.raw?.toFixed(2)}`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // =============================================
+            // 4. INSIGHTS AVANÇADOS (consome API REST)
+            // =============================================
+            (function configurarInsights() {
+                const btn = document.getElementById('btnInsights');
+                const spinner = document.getElementById('insightsSpinner');
+                const content = document.getElementById('insightsContent');
+                const errorBox = document.getElementById('insightsError');
+
+                if (!btn || !content) {
+                    return; // card não está na página
+                }
+
+                const idAvaliacao = /*[[${avaliacao.idAvaliacao}]]*/ null;
+                const idMedico = /*[[${resumo.idMedico()}]]*/ null;
+
+                let jaCarregado = false;
+
+                function setLoading(isLoading) {
+                    if (isLoading) {
+                        btn.disabled = true;
+                        spinner.classList.remove('d-none');
+                        errorBox.classList.add('d-none');
+                        errorBox.textContent = '';
+                    } else {
+                        btn.disabled = false;
+                        spinner.classList.add('d-none');
+                    }
+                }
+
+                function renderInsights(data) {
+                    content.innerHTML = '';
+
+                    const blocos = [
+                        ['Visão geral', data.visaoGeral],
+                        ['Destaques positivos', data.destaquesPositivos],
+                        ['Pontos de atenção', data.pontosAtencao],
+                        ['Sugestões de desenvolvimento', data.sugestoesDesenvolvimento]
+                    ];
+
+                    blocos.forEach(([titulo, texto]) => {
+                        if (!texto) return;
+
+                        const p = document.createElement('p');
+                        const strong = document.createElement('strong');
+                        strong.textContent = titulo + ': ';
+                        p.appendChild(strong);
+
+                        const span = document.createElement('span');
+                        span.textContent = texto;
+                        p.appendChild(span);
+
+                        content.appendChild(p);
+                    });
+                }
+
+                btn.addEventListener('click', function () {
+                    if (!idAvaliacao || !idMedico) {
+                        return;
+                    }
+
+                    // se já carregou uma vez, apenas reexibe (não refaz a chamada)
+                    if (jaCarregado) {
+                        return;
+                    }
+
+                    const url = `/app/api/gestor/relatorios/avaliacoes/${idAvaliacao}/medico/${idMedico}/insights`;
+
+                    setLoading(true);
+
+                    fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Falha ao buscar insights (HTTP ' + response.status + ').');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            renderInsights(data);
+                            jaCarregado = true;
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            errorBox.textContent = 'Não foi possível gerar os insights neste momento. Tente novamente mais tarde.';
+                            errorBox.classList.remove('d-none');
+                        })
+                        .finally(() => {
+                            setLoading(false);
+                        });
+                });
+            })();
+
+
+
+
+
+        }); // fim DOMContentLoaded
         /*]]>*/
     </script>
 </div>

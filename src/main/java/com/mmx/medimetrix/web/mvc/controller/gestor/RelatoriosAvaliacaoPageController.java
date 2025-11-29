@@ -83,6 +83,7 @@ public class RelatoriosAvaliacaoPageController {
         model.addAttribute("avaliacao", avaliacao);
         model.addAttribute("resumo", relatorio.resumo());
         model.addAttribute("questoes", relatorio.questoes());
+        model.addAttribute("criterios", relatorio.criterios());
 
         return "gestor/relatorios-avaliacao-medico";
     }

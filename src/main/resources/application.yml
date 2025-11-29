@@ -16,3 +16,16 @@ spring:
 
 server:
   port: 8080
+
+logging:
+  level:
+    com.mmx.medimetrix.application.relatorio.service: DEBUG
+    com.mmx.medimetrix.infrastructure.gemini: DEBUG
+
+# =======================================================
+# GEMINI — CONFIGURAÇÃO PARA A API GRATUITA DO GOOGLE
+# =======================================================
+gemini:
+  api:
+    key: "AIzaSyDwzCkpsHK2ZqvJudSZjGWCHG_dFoqB8XA"
+    model: "gemini-flash-latest"

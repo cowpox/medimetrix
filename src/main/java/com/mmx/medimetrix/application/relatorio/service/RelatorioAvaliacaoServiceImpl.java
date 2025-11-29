@@ -1,6 +1,7 @@
 package com.mmx.medimetrix.application.relatorio.service;
 
 import com.mmx.medimetrix.application.avaliacao.service.AvaliacaoService;
+import com.mmx.medimetrix.application.criterio.service.CriterioService;
 import com.mmx.medimetrix.application.especialidade.service.EspecialidadeService;
 import com.mmx.medimetrix.application.medico.service.MedicoService;
 import com.mmx.medimetrix.application.participacao.service.ParticipacaoService;
@@ -18,11 +19,17 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
 @Service
 public class RelatorioAvaliacaoServiceImpl implements RelatorioAvaliacaoService {
 
     private static final DateTimeFormatter DF = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final int BIG_SIZE = 1000;
+    private static final Logger log = LoggerFactory.getLogger(RelatorioAvaliacaoServiceImpl.class);
+
 
     private final AvaliacaoService avaliacaoService;
     private final ParticipacaoService participacaoService;
@@ -32,6 +39,7 @@ public class RelatorioAvaliacaoServiceImpl implements RelatorioAvaliacaoService 
     private final MedicoService medicoService;
     private final UnidadeService unidadeService;
     private final EspecialidadeService especialidadeService;
+    private final CriterioService criterioService;
 
     public RelatorioAvaliacaoServiceImpl(AvaliacaoService avaliacaoService,
                                          ParticipacaoService participacaoService,
@@ -40,7 +48,8 @@ public class RelatorioAvaliacaoServiceImpl implements RelatorioAvaliacaoService 
                                          QuestaoService questaoService,
                                          MedicoService medicoService,
                                          UnidadeService unidadeService,
-                                         EspecialidadeService especialidadeService) {
+                                         EspecialidadeService especialidadeService,
+                                         CriterioService criterioService) {
         this.avaliacaoService = avaliacaoService;
         this.participacaoService = participacaoService;
         this.respostaService = respostaService;
@@ -49,23 +58,30 @@ public class RelatorioAvaliacaoServiceImpl implements RelatorioAvaliacaoService 
         this.medicoService = medicoService;
         this.unidadeService = unidadeService;
         this.especialidadeService = especialidadeService;
+        this.criterioService = criterioService;
     }
 
-    // ... (Métodos listarAvaliacoes e detalharAvaliacao permanecem iguais) ...
+    // ==========================================================
+    // Lista de avaliações para a tela de relatórios
+    // ==========================================================
     @Override
     public List<AvaliacaoResumoVM> listarAvaliacoes(String termo, String status) {
-        // (Código omitido para brevidade, permanece igual ao original)
         List<Avaliacao> todas = avaliacaoService.listPaged(0, BIG_SIZE);
+
+        // filtra: não mostra rascunho
         List<Avaliacao> filtradas = todas.stream()
                 .filter(a -> !"RASCUNHO".equalsIgnoreCase(a.getStatus()))
                 .collect(Collectors.toList());
 
+        // filtro por status
         if (status != null && !status.isBlank()) {
             String s = status.toUpperCase();
             filtradas = filtradas.stream()
                     .filter(a -> s.equalsIgnoreCase(a.getStatus()))
                     .collect(Collectors.toList());
         }
+
+        // filtro por termo no título
         if (termo != null && !termo.isBlank()) {
             String t = termo.toLowerCase();
             filtradas = filtradas.stream()
@@ -76,64 +92,116 @@ public class RelatorioAvaliacaoServiceImpl implements RelatorioAvaliacaoService 
         List<AvaliacaoResumoVM> avaliacoes = new ArrayList<>();
         for (Avaliacao a : filtradas) {
             List<Participacao> parts = participacaoService.listByAvaliacao(a.getIdAvaliacao(), 0, BIG_SIZE);
+
             long total = parts.size();
             long respondidas = parts.stream().filter(p -> "RESPONDIDA".equals(p.getStatus())).count();
             long emAndamento = parts.stream().filter(p -> "EM_ANDAMENTO".equals(p.getStatus())).count();
             long pendentes = parts.stream().filter(p -> "PENDENTE".equals(p.getStatus())).count();
+
             BigDecimal adesao = BigDecimal.ZERO;
             if (total > 0) {
-                adesao = BigDecimal.valueOf((respondidas * 100.0) / total).setScale(1, RoundingMode.HALF_UP);
+                adesao = BigDecimal
+                        .valueOf((respondidas * 100.0) / total)
+                        .setScale(1, RoundingMode.HALF_UP);
             }
+
             String periodo = "-";
             if (a.getDataInicioAplic() != null && a.getDataFimAplic() != null) {
-                periodo = a.getDataInicioAplic().format(DF) + " a " + a.getDataFimAplic().format(DF);
+                periodo = a.getDataInicioAplic().format(DF)
+                        + " a "
+                        + a.getDataFimAplic().format(DF);
             }
-            avaliacoes.add(new AvaliacaoResumoVM(a.getIdAvaliacao(), a.getTitulo(), periodo, a.getStatus(), total, respondidas, emAndamento, pendentes, adesao));
+
+            avaliacoes.add(new AvaliacaoResumoVM(
+                    a.getIdAvaliacao(),
+                    a.getTitulo(),
+                    periodo,
+                    a.getStatus(),
+                    total,
+                    respondidas,
+                    emAndamento,
+                    pendentes,
+                    adesao
+            ));
         }
+
         avaliacoes.sort(Comparator.comparing(AvaliacaoResumoVM::titulo));
         return avaliacoes;
     }
 
+    // ==========================================================
+    // Relatório consolidado da avaliação
+    // ==========================================================
     @Override
     public RelatorioAvaliacaoDetalheVM detalharAvaliacao(Long idAvaliacao) {
-        // (Código omitido para brevidade, permanece igual ao original, pois já estava correto)
-        // Apenas para manter o contexto, ele usava contarQuestoesNumericas e calculava a lista de médicos
         return this.detalharAvaliacaoOriginal(idAvaliacao);
     }
 
-    // Método auxiliar apenas para não duplicar código na resposta (no seu projeto use o original)
     private RelatorioAvaliacaoDetalheVM detalharAvaliacaoOriginal(Long idAvaliacao) {
         Avaliacao avaliacao = avaliacaoService.findById(idAvaliacao)
                 .orElseThrow(() -> new IllegalArgumentException("Avaliação não encontrada"));
-        List<Participacao> participacoes = participacaoService.listByAvaliacao(avaliacao.getIdAvaliacao(), 0, BIG_SIZE);
+
+        List<Participacao> participacoes =
+                participacaoService.listByAvaliacao(avaliacao.getIdAvaliacao(), 0, BIG_SIZE);
+
         long total = participacoes.size();
         long respondidas = participacoes.stream().filter(p -> "RESPONDIDA".equals(p.getStatus())).count();
         long emAndamento = participacoes.stream().filter(p -> "EM_ANDAMENTO".equals(p.getStatus())).count();
         long pendentes = participacoes.stream().filter(p -> "PENDENTE".equals(p.getStatus())).count();
+
         BigDecimal adesao = BigDecimal.ZERO;
         if (total > 0) {
-            adesao = BigDecimal.valueOf((respondidas * 100.0) / total).setScale(1, RoundingMode.HALF_UP);
+            adesao = BigDecimal
+                    .valueOf((respondidas * 100.0) / total)
+                    .setScale(1, RoundingMode.HALF_UP);
         }
+
         String periodo = "-";
         if (avaliacao.getDataInicioAplic() != null && avaliacao.getDataFimAplic() != null) {
-            periodo = avaliacao.getDataInicioAplic().format(DF) + " a " + avaliacao.getDataFimAplic().format(DF);
+            periodo = avaliacao.getDataInicioAplic().format(DF)
+                    + " a "
+                    + avaliacao.getDataFimAplic().format(DF);
         }
-        AvaliacaoResumoVM resumo = new AvaliacaoResumoVM(avaliacao.getIdAvaliacao(), avaliacao.getTitulo(), periodo, avaliacao.getStatus(), total, respondidas, emAndamento, pendentes, adesao);
+
+        AvaliacaoResumoVM resumo = new AvaliacaoResumoVM(
+                avaliacao.getIdAvaliacao(),
+                avaliacao.getTitulo(),
+                periodo,
+                avaliacao.getStatus(),
+                total,
+                respondidas,
+                emAndamento,
+                pendentes,
+                adesao
+        );
+
         int totalQuestoesNumericas = contarQuestoesNumericas(participacoes);
+
         List<ParticipacaoResumoVM> medicos = new ArrayList<>();
         for (Participacao p : participacoes) {
             Long idMedico = p.getAvaliadoMedicoId();
             String nomeMedico;
-            try { nomeMedico = usuarioService.getById(idMedico).getNome(); } catch (Exception e) { nomeMedico = "(médico não encontrado)"; }
+            try {
+                nomeMedico = usuarioService.getById(idMedico).getNome();
+            } catch (Exception e) {
+                nomeMedico = "(médico não encontrado)";
+            }
             BigDecimal media = calcularNotaGlobalParticipacao(p, totalQuestoesNumericas);
-            medicos.add(new ParticipacaoResumoVM(p.getIdParticipacao(), idMedico, nomeMedico, p.getStatus(), media));
+            medicos.add(new ParticipacaoResumoVM(
+                    p.getIdParticipacao(),
+                    idMedico,
+                    nomeMedico,
+                    p.getStatus(),
+                    media
+            ));
         }
+
         medicos.sort(Comparator.comparing(ParticipacaoResumoVM::nomeMedico));
         return new RelatorioAvaliacaoDetalheVM(resumo, medicos);
     }
 
     // ==========================================================
-    // Relatório por médico (CORRIGIDO)
+    // Relatório por médico (com radar por critério)
     // ==========================================================
     @Override
     public RelatorioAvaliacaoMedicoVM detalharAvaliacaoPorMedico(Long idAvaliacao, Long idMedico) {
@@ -173,11 +241,10 @@ public class RelatorioAvaliacaoServiceImpl implements RelatorioAvaliacaoService 
             }
         }
 
-        // 1. Calcula o total de questões numéricas da avaliação inteira (Denominador Global)
+        // 1. Total de questões numéricas da avaliação inteira (denominador global)
         int totalQuestoesNumericas = contarQuestoesNumericas(participacoes);
 
-        // 2. Prepara Mapa para notas por questão (usado no gráfico de barras)
-        // K: idQuestao, V: Lista de notas normalizadas (0-5) de todos os médicos
+        // 2. Mapa de notas normalizadas (0–5) por questão para o grupo
         Map<Long, List<BigDecimal>> notasGrupoPorQuestao = new HashMap<>();
 
         for (Participacao p : participacoes) {
@@ -197,13 +264,38 @@ public class RelatorioAvaliacaoServiceImpl implements RelatorioAvaliacaoService 
             }
         }
 
-        // --------------------------------------------------------------------
-        // CÁLCULO DAS ESTATÍSTICAS GLOBAIS DO GRUPO (CORREÇÃO AQUI)
-        // --------------------------------------------------------------------
+        // 2.1 Agrega por critério – grupo
+        Map<Long, Long> questaoParaCriterio = new HashMap<>();
+        Map<Long, BigDecimal> somaGrupoPorCriterio = new HashMap<>();
+        Map<Long, Integer> qtdeGrupoPorCriterio = new HashMap<>();
+
+        for (Map.Entry<Long, List<BigDecimal>> entry : notasGrupoPorQuestao.entrySet()) {
+            Long idQuestao = entry.getKey();
+            List<BigDecimal> notasNormalizadasQuestao = entry.getValue();
+
+            Questao q = questaoService.findById(idQuestao).orElse(null);
+            Long idCriterio = extrairIdCriterio(q);
+            if (idCriterio == null) continue;
+
+            questaoParaCriterio.put(idQuestao, idCriterio);
+
+            BigDecimal somaQ = BigDecimal.ZERO;
+            int countQ = 0;
+            for (BigDecimal n : notasNormalizadasQuestao) {
+                if (n == null) continue;
+                somaQ = somaQ.add(n);
+                countQ++;
+            }
+            if (countQ == 0) continue;
+
+            somaGrupoPorCriterio.merge(idCriterio, somaQ, BigDecimal::add);
+            qtdeGrupoPorCriterio.merge(idCriterio, countQ, Integer::sum);
+        }
+
+        // 3. Estatísticas globais da avaliação (mín/máx/média do grupo)
         List<BigDecimal> notasGlobaisDosColegas = new ArrayList<>();
 
         for (Participacao p : participacoes) {
-            // Calcula a nota global (0-5) deste participante
             BigDecimal notaGlobalParticipante = calcularNotaGlobalParticipacao(p, totalQuestoesNumericas);
             if (notaGlobalParticipante != null) {
                 notasGlobaisDosColegas.add(notaGlobalParticipante);
@@ -226,20 +318,24 @@ public class RelatorioAvaliacaoServiceImpl implements RelatorioAvaliacaoService 
             BigDecimal soma = notasGlobaisDosColegas.stream()
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            mediaGrupo = soma.divide(BigDecimal.valueOf(notasGlobaisDosColegas.size()), 2, RoundingMode.HALF_UP);
+            mediaGrupo = soma.divide(
+                    BigDecimal.valueOf(notasGlobaisDosColegas.size()),
+                    2,
+                    RoundingMode.HALF_UP
+            );
         }
-        // --------------------------------------------------------------------
 
-        // --------------------------------------------------------------------
-        // RESPOSTAS DO MÉDICO
-        // --------------------------------------------------------------------
+        // 4. Respostas do médico
         List<Resposta> respostasMedico = respostaService.listByParticipacao(participacao.getIdParticipacao());
         List<BigDecimal> notasOriginais = new ArrayList<>();
         List<BigDecimal> notasNormalizadasMedico = new ArrayList<>();
         List<QuestaoNotaVM> questoes = new ArrayList<>();
         int ordem = 1;
 
-        // Ordena respostas para garantir consistência visual (opcional, mas bom)
+        // mapas para agregação por critério (médico)
+        Map<Long, BigDecimal> somaMedicoPorCriterio = new HashMap<>();
+        Map<Long, Integer> qtdeMedicoPorCriterio = new HashMap<>();
+
         respostasMedico.sort(Comparator.comparing(Resposta::getIdQuestao));
 
         for (Resposta r : respostasMedico) {
@@ -247,51 +343,68 @@ public class RelatorioAvaliacaoServiceImpl implements RelatorioAvaliacaoService 
             BigDecimal maxEscala = null;
             BigDecimal valor = r.getValorNumerico();
 
-            if (r.getIdQuestao() != null) {
-                var qOpt = questaoService.findById(r.getIdQuestao());
+            Long idQuestao = r.getIdQuestao();
+            Questao questaoEnt = null;
+            Long idCriterio = null;
+
+            if (idQuestao != null) {
+                var qOpt = questaoService.findById(idQuestao);
                 if (qOpt.isPresent()) {
-                    textoQuestao = qOpt.get().getEnunciado();
-                    maxEscala = obterEscalaMax(qOpt.get());
+                    questaoEnt = qOpt.get();
+                    textoQuestao = questaoEnt.getEnunciado();
+                    maxEscala = obterEscalaMax(questaoEnt);
                 } else {
                     textoQuestao = "(questão não encontrada)";
                 }
+
+                // tenta reaproveitar o mapeamento; se não houver, extrai do objeto
+                idCriterio = questaoParaCriterio.get(idQuestao);
+                if (idCriterio == null && questaoEnt != null) {
+                    idCriterio = extrairIdCriterio(questaoEnt);
+                }
             }
 
-            // Min/Max do grupo para ESTA questão específica (para o gráfico de barras)
+            // Min/Max/Média do grupo para ESTA questão (barra horizontal)
             BigDecimal notaGrupoMinQuestao = null;
             BigDecimal notaGrupoMaxQuestao = null;
             BigDecimal notaGrupoMediaQuestao = null;
 
-            if (r.getIdQuestao() != null) {
-                List<BigDecimal> grupoNotas = notasGrupoPorQuestao.get(r.getIdQuestao());
+            if (idQuestao != null) {
+                List<BigDecimal> grupoNotas = notasGrupoPorQuestao.get(idQuestao);
                 if (grupoNotas != null && !grupoNotas.isEmpty()) {
-                    // Mínimo
                     notaGrupoMinQuestao = grupoNotas.stream()
                             .filter(Objects::nonNull)
                             .min(Comparator.naturalOrder())
                             .orElse(null);
 
-                    // Máximo
                     notaGrupoMaxQuestao = grupoNotas.stream()
                             .filter(Objects::nonNull)
                             .max(Comparator.naturalOrder())
                             .orElse(null);
 
-                    // Média (Novo Cálculo)
                     BigDecimal soma = grupoNotas.stream()
                             .filter(Objects::nonNull)
                             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
                     notaGrupoMediaQuestao = soma.divide(
-                            BigDecimal.valueOf(grupoNotas.size()), 2, RoundingMode.HALF_UP);
-
-
+                            BigDecimal.valueOf(grupoNotas.size()),
+                            2,
+                            RoundingMode.HALF_UP
+                    );
                 }
             }
 
+            BigDecimal notaNormalizada = null;
             if (valor != null && maxEscala != null && maxEscala.compareTo(BigDecimal.ZERO) > 0) {
+                notaNormalizada = normalizarPara05(valor, maxEscala);
                 notasOriginais.add(valor);
-                notasNormalizadasMedico.add(normalizarPara05(valor, maxEscala));
+                notasNormalizadasMedico.add(notaNormalizada);
+
+                // agregação por critério (médico)
+                if (idCriterio != null && notaNormalizada != null) {
+                    somaMedicoPorCriterio.merge(idCriterio, notaNormalizada, BigDecimal::add);
+                    qtdeMedicoPorCriterio.merge(idCriterio, 1, Integer::sum);
+                }
             }
 
             questoes.add(new QuestaoNotaVM(
@@ -305,7 +418,7 @@ public class RelatorioAvaliacaoServiceImpl implements RelatorioAvaliacaoService 
             ));
         }
 
-        // Nota global do médico
+        // 5. Nota global do médico (gauge)
         BigDecimal media = calcularNotaGlobalMedico(notasNormalizadasMedico, totalQuestoesNumericas);
 
         BigDecimal min = null;
@@ -317,7 +430,9 @@ public class RelatorioAvaliacaoServiceImpl implements RelatorioAvaliacaoService 
 
         String periodo = "-";
         if (avaliacao.getDataInicioAplic() != null && avaliacao.getDataFimAplic() != null) {
-            periodo = avaliacao.getDataInicioAplic().format(DF) + " a " + avaliacao.getDataFimAplic().format(DF);
+            periodo = avaliacao.getDataInicioAplic().format(DF)
+                    + " a "
+                    + avaliacao.getDataFimAplic().format(DF);
         }
 
         StatusVisualVM statusVm = buildStatusVisual(avaliacao.getStatus());
@@ -337,14 +452,55 @@ public class RelatorioAvaliacaoServiceImpl implements RelatorioAvaliacaoService 
                 min,
                 max,
                 notasOriginais.size(),
-                mediaGrupo,   // Agora calculado
-                menorNotaGp,  // Agora calculado
-                maiorNotaGp   // Agora calculado
+                mediaGrupo,
+                menorNotaGp,
+                maiorNotaGp
         );
 
-        return new RelatorioAvaliacaoMedicoVM(cabecalho, questoes);
-    }
+        // 6. Monta lista de critérios para o gráfico radar
+        List<CriterioRadarVM> criteriosRadar = new ArrayList<>();
+        Set<Long> idsCriterios = new HashSet<>();
+        idsCriterios.addAll(somaGrupoPorCriterio.keySet());
+        idsCriterios.addAll(somaMedicoPorCriterio.keySet());
 
+        for (Long idCriterio : idsCriterios) {
+            if (idCriterio == null) continue;
+
+            String nomeCriterio = criterioService.findById(idCriterio)
+                    .map(Criterio::getNome)
+                    .orElse("(critério não encontrado)");
+
+            BigDecimal notaMedicoCrit = null;
+            BigDecimal notaGrupoCrit = null;
+
+            Integer countMedico = qtdeMedicoPorCriterio.get(idCriterio);
+            if (countMedico != null && countMedico > 0) {
+                notaMedicoCrit = somaMedicoPorCriterio.get(idCriterio)
+                        .divide(BigDecimal.valueOf(countMedico), 2, RoundingMode.HALF_UP);
+            }
+
+            Integer countGrupo = qtdeGrupoPorCriterio.get(idCriterio);
+            if (countGrupo != null && countGrupo > 0) {
+                notaGrupoCrit = somaGrupoPorCriterio.get(idCriterio)
+                        .divide(BigDecimal.valueOf(countGrupo), 2, RoundingMode.HALF_UP);
+            }
+
+            criteriosRadar.add(new CriterioRadarVM(
+                    idCriterio,
+                    nomeCriterio,
+                    notaMedicoCrit,
+                    notaGrupoCrit
+            ));
+        }
+
+        criteriosRadar.sort(Comparator.comparing(CriterioRadarVM::nomeCriterio));
+
+
+
+
+
+        return new RelatorioAvaliacaoMedicoVM(cabecalho, questoes, criteriosRadar);
+    }
 
     // ==========================================================
     // Helpers
@@ -374,13 +530,20 @@ public class RelatorioAvaliacaoServiceImpl implements RelatorioAvaliacaoService 
 
     private BigDecimal normalizarPara05(BigDecimal valor, BigDecimal maxEscala) {
         if (valor == null || maxEscala == null || maxEscala.compareTo(BigDecimal.ZERO) <= 0) return null;
-        return valor.multiply(BigDecimal.valueOf(5)).divide(maxEscala, 3, RoundingMode.HALF_UP);
+        return valor.multiply(BigDecimal.valueOf(5))
+                .divide(maxEscala, 3, RoundingMode.HALF_UP);
     }
 
     private BigDecimal calcularNotaGlobalMedico(List<BigDecimal> notasNormalizadas, int totalQuestoesNumericas) {
         if (totalQuestoesNumericas <= 0 || notasNormalizadas == null || notasNormalizadas.isEmpty()) return null;
-        BigDecimal soma = notasNormalizadas.stream().filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
-        return soma.divide(BigDecimal.valueOf(totalQuestoesNumericas), 2, RoundingMode.HALF_UP);
+        BigDecimal soma = notasNormalizadas.stream()
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return soma.divide(
+                BigDecimal.valueOf(totalQuestoesNumericas),
+                2,
+                RoundingMode.HALF_UP
+        );
     }
 
     /**
@@ -409,8 +572,20 @@ public class RelatorioAvaliacaoServiceImpl implements RelatorioAvaliacaoService 
     }
 
     private StatusVisualVM buildStatusVisual(String status) {
-        if ("PUBLICADA".equalsIgnoreCase(status)) return new StatusVisualVM("Publicada", "bg-primary text-white");
-        if ("ENCERRADA".equalsIgnoreCase(status)) return new StatusVisualVM("Encerrada", "bg-secondary text-white");
+        if ("PUBLICADA".equalsIgnoreCase(status))
+            return new StatusVisualVM("Publicada", "bg-primary text-white");
+        if ("ENCERRADA".equalsIgnoreCase(status))
+            return new StatusVisualVM("Encerrada", "bg-secondary text-white");
         return new StatusVisualVM(status, "bg-secondary text-white");
+    }
+
+    /**
+     * Helper para obter o id do critério a partir da Questao.
+     * Ajuste aqui se o nome do getter na entidade for diferente.
+     */
+    private Long extrairIdCriterio(Questao q) {
+        if (q == null) return null;
+        // Se na sua entidade o campo for getIdCriterio(), troque esta linha.
+        return q.getIdCriterio();
     }
 }
