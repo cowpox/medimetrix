@@ -27,5 +27,5 @@ logging:
 # =======================================================
 gemini:
   api:
-    key: "AIzaSyDwzCkpsHK2ZqvJudSZjGWCHG_dFoqB8XA"
+    key: ${GEMINI_API_KEY:}
     model: "gemini-flash-latest"

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mmx.medimetrix.application.relatorio.vm.*;
 import com.mmx.medimetrix.infrastructure.gemini.GeminiProperties;
+import com.mmx.medimetrix.utils.MarkdownUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -231,11 +232,18 @@ public class RelatorioAvaliacaoInsightsServiceImpl implements RelatorioAvaliacao
 
                 .append("NUNCA use o nome do médico. Use termos como \"o profissional avaliado\" ou \"o médico\".\n")
                 .append("Não invente informações que não estejam nos dados. Baseie-se apenas nos números fornecidos.\n\n")
+                .append("Regra importante: o foco da análise é SEMPRE a unidade de atuação, ")
+                .append("nunca a especialidade clínica.\n")
+                .append("Não mencione a espcialidade clínica.")
+
 
                 .append("Contexto da avaliação:\n")
                 .append("- Título da avaliação: ").append(optional(resumo.tituloAvaliacao())).append("\n")
-                .append("- Unidade de atuação: ").append(optional(resumo.nomeUnidade())).append("\n")
-                .append("- Especialidade: ").append(optional(resumo.nomeEspecialidade())).append("\n")
+                .append("- Unidade de atuação (FOCO PRINCIPAL da avaliação): ")
+                .append(optional(resumo.nomeUnidade())).append("\n")
+                .append("- Especialidade clínica (apenas informação complementar): ")
+                .append(optional(resumo.nomeEspecialidade())).append("\n")
+
                 .append("- Nota global do profissional (0-5): ").append(format(safe(resumo.media()))).append("\n")
                 .append("- Nota média do grupo (0-5): ").append(format(safe(resumo.mediaGrupo()))).append("\n")
                 .append("- Menor nota global do grupo: ").append(format(safe(resumo.menorNotaGrupo()))).append("\n")
@@ -262,7 +270,11 @@ public class RelatorioAvaliacaoInsightsServiceImpl implements RelatorioAvaliacao
                 .append("- \"destaques_positivos\" descreve os principais pontos fortes.\n")
                 .append("- \"pontos_atencao\" aponta, de forma cuidadosa, onde há espaço para evolução.\n")
                 .append("- \"sugestoes_desenvolvimento\" traz recomendações práticas de desenvolvimento.\n")
-                .append("Use tom profissional, respeitoso, sem juízos pessoais ou termos pejorativos.\n");
+                .append("Use tom profissional, respeitoso, sem juízos pessoais ou termos pejorativos.\n")
+                .append("Quando quiser destacar o nome de um critério importante ")
+                .append("(como \"Trabalho em Equipe\", \"Segurança do Paciente\" etc.), ")
+                .append("coloque esse nome entre **duplos asteriscos** em Markdown, por exemplo **Trabalho em Equipe**.\n")
+                .append("Evite usar itálico; use apenas **negrito** para ênfase.\n");
 
         // Como fallback semântico, passamos também o texto heurístico que já geramos
         sb.append("\nA seguir, um rascunho heurístico já gerado pelo sistema, que você pode usar como referência, ")
@@ -340,18 +352,24 @@ public class RelatorioAvaliacaoInsightsServiceImpl implements RelatorioAvaliacao
 
             JsonNode root = mapper.readTree(cleaned);
 
-            String visaoGeral = root.path("visao_geral").asText(null);
-            String destaques = root.path("destaques_positivos").asText(null);
-            String atencao   = root.path("pontos_atencao").asText(null);
-            String sugestoes = root.path("sugestoes_desenvolvimento").asText(null);
+            String visaoGeralMd = root.path("visao_geral").asText(null);
+            String destaquesMd  = root.path("destaques_positivos").asText(null);
+            String atencaoMd    = root.path("pontos_atencao").asText(null);
+            String sugestoesMd  = root.path("sugestoes_desenvolvimento").asText(null);
+
+// converte de Markdown (**texto**) para HTML (<strong>texto</strong>)
+            String visaoGeralHtml = MarkdownUtils.toHtml(visaoGeralMd);
+            String destaquesHtml  = MarkdownUtils.toHtml(destaquesMd);
+            String atencaoHtml    = MarkdownUtils.toHtml(atencaoMd);
+            String sugestoesHtml  = MarkdownUtils.toHtml(sugestoesMd);
 
             return new RelatorioMedicoInsightsVM(
                     resumo,
                     criterios,
-                    visaoGeral,
-                    destaques,
-                    atencao,
-                    sugestoes
+                    visaoGeralHtml,
+                    destaquesHtml,
+                    atencaoHtml,
+                    sugestoesHtml
             );
         } catch (Exception e) {
             log.error("Falha ao interpretar resposta do Gemini. Usando heurístico.", e);

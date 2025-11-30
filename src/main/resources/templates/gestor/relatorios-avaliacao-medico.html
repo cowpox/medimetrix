@@ -703,21 +703,25 @@
                         ['Sugestões de desenvolvimento', data.sugestoesDesenvolvimento]
                     ];
 
-                    blocos.forEach(([titulo, texto]) => {
-                        if (!texto) return;
+                    blocos.forEach(([titulo, html]) => {
+                        if (!html) return;
 
-                        const p = document.createElement('p');
+                        const wrapper = document.createElement('div');
+
+                        // Título do bloco em negrito
                         const strong = document.createElement('strong');
                         strong.textContent = titulo + ': ';
-                        p.appendChild(strong);
+                        wrapper.appendChild(strong);
 
+                        // Corpo vindo da API já em HTML (com <p>, <strong> etc.)
                         const span = document.createElement('span');
-                        span.textContent = texto;
-                        p.appendChild(span);
+                        span.innerHTML = html;   // <- AQUI é o ponto chave
+                        wrapper.appendChild(span);
 
-                        content.appendChild(p);
+                        content.appendChild(wrapper);
                     });
                 }
+
 
                 btn.addEventListener('click', function () {
                     if (!idAvaliacao || !idMedico) {
