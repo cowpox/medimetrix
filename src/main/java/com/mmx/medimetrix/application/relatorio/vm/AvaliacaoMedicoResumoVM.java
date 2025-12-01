@@ -20,8 +20,12 @@ public record AvaliacaoMedicoResumoVM(
         BigDecimal maiorNota,
         Integer totalRespostas,
 
-        // NOVOS CAMPOS – estatísticas do grupo
+        // Estatísticas do grupo (podem ser nulas)
         BigDecimal mediaGrupo,
         BigDecimal menorNotaGrupo,
-        BigDecimal maiorNotaGrupo
+        BigDecimal maiorNotaGrupo,
+
+        // PRIVACIDADE: indica se podemos mostrar comparativos de grupo
+        boolean exibirComparativoGrupo
 ) {}
+

@@ -61,6 +61,22 @@
                         Texto auxiliar / instruções da questão.
                     </p>
 
+                    <!-- Aviso para questões sensíveis -->
+                    <p class="text-muted small mb-1"
+                       th:if="${q.sensivel}">
+                        Esta é uma questão de <strong>conteúdo sensível</strong>. Suas respostas são
+                        tratadas com confidencialidade reforçada e <strong>não serão exibidas ao seu
+                        gestor imediato</strong>, sendo analisadas apenas de forma agregada por áreas autorizadas
+                        (por exemplo, Qualidade ou Diretoria).
+                    </p>
+
+                    <!-- Aviso para questões não visíveis ao gestor, mas não marcadas como sensíveis -->
+                    <p class="text-muted small mb-1"
+                       th:if="${!q.sensivel and q.visivelParaGestor == false}">
+                        Esta resposta <strong>não será exibida ao seu gestor imediato</strong>,
+                        sendo utilizada apenas de forma agregada por áreas autorizadas.
+                    </p>
+
                     <!-- Tipos numéricos: LIKERT_5, BARS_5, NUM_0_10 -->
                     <div th:if="${q.tipo == 'LIKERT_5' or q.tipo == 'BARS_5' or q.tipo == 'NUM_0_10'}">
                         <select class="form-select"

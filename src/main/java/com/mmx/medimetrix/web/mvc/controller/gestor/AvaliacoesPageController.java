@@ -429,6 +429,9 @@ public String editar(@PathVariable Long id, Model model) {
     // =========================================================
     // POST - ATUALIZAR
     // =========================================================
+    // =========================================================
+// POST - ATUALIZAR
+// =========================================================
     @PostMapping("/{id}")
     public String update(@PathVariable Long id,
                          @Valid @ModelAttribute("form") AvaliacaoForm form,
@@ -439,9 +442,11 @@ public String editar(@PathVariable Long id, Model model) {
         Avaliacao atual = avaliacaoService.findById(id)
                 .orElseThrow(AvaliacaoNaoEncontradaException::new);
 
+        String statusAnterior = atual.getStatus();
+
         boolean modoLeitura =
-                "PUBLICADA".equalsIgnoreCase(atual.getStatus()) ||
-                        "ENCERRADA".equalsIgnoreCase(atual.getStatus());
+                "PUBLICADA".equalsIgnoreCase(statusAnterior) ||
+                        "ENCERRADA".equalsIgnoreCase(statusAnterior);
 
         if (modoLeitura) {
             // não deixa atualizar via POST se não for rascunho
@@ -459,7 +464,67 @@ public String editar(@PathVariable Long id, Model model) {
             return "gestor/avaliacoes-form";
         }
 
+        boolean querPublicar = "PUBLICADA".equalsIgnoreCase(form.getStatus());
 
+        // Caso especial: RASCUNHO -> PUBLICADA
+        if (querPublicar && "RASCUNHO".equalsIgnoreCase(statusAnterior)) {
+
+            // 1) Atualiza campos mantendo status RASCUNHO
+            AvaliacaoUpdate cmdSemStatus = new AvaliacaoUpdate(
+                    form.getTitulo(),
+                    form.getDataInicioAplic(),
+                    form.getDataFimAplic(),
+                    form.getkMinimo(),
+                    null, // status continua o mesmo (RASCUNHO)
+                    form.getAtivo(),
+                    form.getEscopo(),
+                    form.getIdUnidade(),
+                    form.getIdEspecialidade()
+            );
+
+            avaliacaoService.update(id, cmdSemStatus);
+
+            // 2) Recarrega avaliação já atualizada (pra pegar escopo/idUnidade/idEspecialidade finais)
+            Avaliacao atualizada = avaliacaoService.findById(id)
+                    .orElseThrow(AvaliacaoNaoEncontradaException::new);
+
+            // 3) Gera participações conforme o escopo (se ainda não existir nenhuma)
+            try {
+                participacaoService.gerarParticipacoesPorEscopo(
+                        id,
+                        atualizada.getEscopo(),
+                        atualizada.getIdUnidade(),
+                        atualizada.getIdEspecialidade()
+                );
+            } catch (IllegalStateException | IllegalArgumentException ex) {
+                // Ex.: já existem participações, ou escopo inválido / sem idUnidade/idEspecialidade
+                redirect.addFlashAttribute("errorMessage", ex.getMessage());
+                return "redirect:/app/avaliacoes/" + id + "/editar";
+            }
+
+            // 4) Publica de fato (valida questões + participações e muda status)
+            try {
+                avaliacaoService.publicar(id);
+            } catch (AvaliacaoJaPublicadaException ex) {
+                redirect.addFlashAttribute("errorMessage",
+                        "A avaliação já está publicada.");
+                return "redirect:/app/avaliacoes";
+            } catch (AvaliacaoEncerradaException ex) {
+                redirect.addFlashAttribute("errorMessage",
+                        "A avaliação já foi encerrada e não pode ser publicada novamente.");
+                return "redirect:/app/avaliacoes";
+            } catch (IllegalStateException ex) {
+                // Sem questões ou sem participações (fallback de segurança)
+                redirect.addFlashAttribute("errorMessage", ex.getMessage());
+                return "redirect:/app/avaliacoes/" + id + "/editar";
+            }
+
+            redirect.addFlashAttribute("successMessage",
+                    "Avaliação publicada e participações geradas com sucesso.");
+            return "redirect:/app/avaliacoes";
+        }
+
+        // Fluxo normal: não está publicando (permite mudar status para RASCUNHO/ENCERRADA etc.)
         AvaliacaoUpdate cmd = new AvaliacaoUpdate(
                 form.getTitulo(),
                 form.getDataInicioAplic(),
@@ -489,9 +554,10 @@ public String editar(@PathVariable Long id, Model model) {
         return "redirect:/app/avaliacoes";
     }
 
+
     // =========================================================
-    // POST - SUSPENDER (status PUBLICADA -> RASCUNHO)
-    // =========================================================
+// POST - SUSPENDER (status PUBLICADA -> RASCUNHO)
+// =========================================================
     @PostMapping("/{id}/suspender")
     public String suspender(@PathVariable Long id,
                             @RequestParam(name = "confirm", required = false, defaultValue = "false")
@@ -507,7 +573,7 @@ public String editar(@PathVariable Long id, Model model) {
             return "redirect:/app/avaliacoes";
         }
 
-        // conta respostas da avaliação (usando listByAvaliacao)
+        // conta respostas da avaliação
         int totalRespostas = respostaService.listByAvaliacao(id, 0, 100000).size();
 
         if (totalRespostas > 0 && !confirm) {
@@ -525,30 +591,27 @@ public String editar(@PathVariable Long id, Model model) {
             participacaoService.delete(p.getIdParticipacao());
         }
 
-        // Volta para RASCUNHO
+        // Volta para RASCUNHO:
+        //  -> não mexe em título/datas/kMin, só em status/ativo/escopo
         AvaliacaoUpdate cmd = new AvaliacaoUpdate(
-                avaliacao.getTitulo(),
-                avaliacao.getDataInicioAplic(),
-                avaliacao.getDataFimAplic(),
-                avaliacao.getkMinimo(),
-                "RASCUNHO",
-                avaliacao.getAtivo(),
-                avaliacao.getEscopo(),
-                avaliacao.getIdUnidade(),
-                avaliacao.getIdEspecialidade()
+                null,                          // titulo
+                null,                          // dataInicioAplic
+                null,                          // dataFimAplic
+                null,                          // kMinimo
+                "RASCUNHO",                    // status
+                avaliacao.getAtivo(),          // ativo
+                avaliacao.getEscopo(),         // escopo
+                avaliacao.getIdUnidade(),      // idUnidade
+                avaliacao.getIdEspecialidade() // idEspecialidade
         );
 
-        // Aqui podemos chamar diretamente o DAO, mas mantive pelo service.
-        // Como o status atual é PUBLICADA, a regra de negócio de update
-        // pode acusar AvaliacaoJaPublicadaException; para não quebrar,
-        // mudamos diretamente no DAO – ou, se preferir, relaxamos a regra.
-        avaliacao.setStatus("RASCUNHO");
         avaliacaoService.update(id, cmd);
 
         redirect.addFlashAttribute("successMessage",
                 "Avaliação suspensa. Participações e respostas foram removidas e o status voltou para RASCUNHO.");
         return "redirect:/app/avaliacoes";
     }
+
 
     // =========================================================
 // HELPER: impedir alterações em avaliação encerrada

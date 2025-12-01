@@ -76,16 +76,18 @@
             <td th:text="${q.enunciado}">Enunciado</td>
             <td th:text="${q.criterioNome}">Critério</td>
             <td class="text-center">
-                <span class="badge me-1"
-                      th:text="${q.sensivel} ? 'Sensível' : 'Não sensível'"
-                      th:classappend="${q.sensivel} ? ' text-bg-danger' : ' text-bg-secondary'">
-                    Sensível
-                </span>
-                <span class="badge"
-                      th:text="${q.visivelParaGestor} ? 'Visível p/ gestor' : 'Oculta p/ gestor'"
-                      th:classappend="${q.visivelParaGestor} ? ' text-bg-info' : ' text-bg-dark'">
-                    Visível p/ gestor
-                </span>
+                <div class="d-inline-flex flex-nowrap gap-1">
+        <span class="badge"
+              th:text="${q.sensivel} ? 'Sensível' : 'Não sensível'"
+              th:classappend="${q.sensivel} ? ' text-bg-danger' : ' text-bg-secondary'">
+            Sensível
+        </span>
+                    <span class="badge"
+                          th:text="${q.visivelParaGestor} ? 'Visível p/ gestor' : 'Oculta p/ gestor'"
+                          th:classappend="${q.visivelParaGestor} ? ' text-bg-info' : ' text-bg-dark'">
+            Visível p/ gestor
+        </span>
+                </div>
             </td>
             <td class="text-center">
                 <span class="badge"

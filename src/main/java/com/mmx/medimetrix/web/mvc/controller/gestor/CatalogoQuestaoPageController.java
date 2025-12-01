@@ -59,40 +59,88 @@ public class CatalogoQuestaoPageController {
                         Criterio::getNome
                 ));
 
-        // Filtro de backend: critério + termo (sem tipo)
-        var filtro = new QuestaoFiltro(
-                termo,
-                null,          // tipo não filtramos mais aqui
-                criterioId,
-                page,
-                size
-        );
-
-        List<Questao> questoesDomain = questaoService.list(filtro);
-        boolean hasNext = questoesDomain.size() == size;  // paginação básica (antes do filtro em memória)
-
         // Converte parâmetros "true"/"false" em Boolean
         Boolean filtroSensivel =
-                "true".equalsIgnoreCase(sensivelParam) ? Boolean.TRUE :
-                        ("false".equalsIgnoreCase(sensivelParam) ? Boolean.FALSE : null);
+                "true".equalsIgnoreCase(sensivelParam) ? Boolean.TRUE
+                        : ("false".equalsIgnoreCase(sensivelParam) ? Boolean.FALSE : null);
 
         Boolean filtroVisivel =
-                "true".equalsIgnoreCase(visivelParam) ? Boolean.TRUE :
-                        ("false".equalsIgnoreCase(visivelParam) ? Boolean.FALSE : null);
+                "true".equalsIgnoreCase(visivelParam) ? Boolean.TRUE
+                        : ("false".equalsIgnoreCase(visivelParam) ? Boolean.FALSE : null);
 
-        // Filtros de sensibilidade/visibilidade em memória (na página retornada)
+        // =========================================================
+        // 1) Buscar TODAS as questões em lotes, varrendo as páginas
+        //    do service até acabar (não dependemos de BIG_SIZE).
+        // =========================================================
+        final int BATCH_SIZE = 100;  // tamanho de cada página no backend
+
+        List<Questao> todasQuestoes = new java.util.ArrayList<>();
+        int pageBackend = 0;
+
+        while (true) {
+            QuestaoFiltro filtroBackend = new QuestaoFiltro(
+                    termo,
+                    null,          // tipo não filtramos aqui
+                    criterioId,
+                    pageBackend,
+                    BATCH_SIZE
+            );
+
+            List<Questao> lote = questaoService.list(filtroBackend);
+            if (lote == null || lote.isEmpty()) {
+                break; // acabou
+            }
+
+            todasQuestoes.addAll(lote);
+
+            if (lote.size() < BATCH_SIZE) {
+                break; // última página
+            }
+
+            pageBackend++;
+        }
+
+        // =========================================================
+        // 2) Aplicar filtros de sensibilidade/visibilidade EM MEMÓRIA
+        // =========================================================
         if (filtroSensivel != null) {
-            questoesDomain = questoesDomain.stream()
+            todasQuestoes = todasQuestoes.stream()
                     .filter(q -> Boolean.TRUE.equals(q.getSensivel()) == filtroSensivel)
                     .toList();
         }
         if (filtroVisivel != null) {
-            questoesDomain = questoesDomain.stream()
+            todasQuestoes = todasQuestoes.stream()
                     .filter(q -> Boolean.TRUE.equals(q.getVisivelParaGestor()) == filtroVisivel)
                     .toList();
         }
 
-        List<QuestaoListItemVM> questoes = questoesDomain.stream()
+        // =========================================================
+        // 3) Paginação em memória após todos os filtros
+        // =========================================================
+        int total = todasQuestoes.size();
+
+        int pageSize = (size != null && size > 0) ? size : 20;
+        int currentPage = (page != null && page >= 0) ? page : 0;
+
+        int fromIndex = currentPage * pageSize;
+        if (fromIndex >= total && total > 0) {
+            // Se pediu página além do total, volta para a primeira
+            currentPage = 0;
+            fromIndex = 0;
+        }
+        int toIndex = Math.min(fromIndex + pageSize, total);
+
+        List<Questao> questoesPage =
+                (fromIndex < toIndex) ? todasQuestoes.subList(fromIndex, toIndex)
+                        : java.util.List.of();
+
+        boolean hasPrev = currentPage > 0;
+        boolean hasNext = toIndex < total;
+
+        // =========================================================
+        // 4) Montar ViewModel
+        // =========================================================
+        List<QuestaoListItemVM> questoes = questoesPage.stream()
                 .map(q -> {
                     String critNome = q.getIdCriterio() != null
                             ? criterioNomePorId.getOrDefault(q.getIdCriterio(), "(sem critério)")
@@ -101,12 +149,11 @@ public class CatalogoQuestaoPageController {
                 })
                 .toList();
 
-
         // lista + paginação
         model.addAttribute("questoes", questoes);
-        model.addAttribute("pageIdx", page);
-        model.addAttribute("size", size);
-        model.addAttribute("hasPrev", page > 0);
+        model.addAttribute("pageIdx", currentPage);
+        model.addAttribute("size", pageSize);
+        model.addAttribute("hasPrev", hasPrev);
         model.addAttribute("hasNext", hasNext);
 
         // devolve filtros selecionados
@@ -117,6 +164,8 @@ public class CatalogoQuestaoPageController {
 
         return "gestor/catalogo-questoes-list";
     }
+
+
 
 
     // ============ FORM NOVO ============

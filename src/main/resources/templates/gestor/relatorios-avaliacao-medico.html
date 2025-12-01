@@ -118,9 +118,13 @@
                     </div>
 
                     <div class="mt-2">
-                        <div class="mb-2">
+                        <div class="mb-2 d-flex justify-content-between align-items-center">
                             <span class="small fw-bold text-muted text-uppercase" style="font-size: 0.75rem;">
                                 Comparativo (Grupo)
+                            </span>
+                            <span th:if="${!resumo.exibirComparativoGrupo()}"
+                                  class="badge bg-light text-muted border small">
+                                Oculto por privacidade (menos que k respostas)
                             </span>
                         </div>
 
@@ -167,7 +171,7 @@
                     <thead>
                     <tr>
                         <th>Questão</th>
-                        <th style="width: 300px;">Performance (Escala 0-5)</th>
+                        <th style="width: 300px;">Performance (Escala 1-5)</th>
                         <th class="text-end" style="width: 120px;">Nota</th>
                     </tr>
                     </thead>
@@ -185,12 +189,26 @@
                             </div>
                         </td>
                         <td class="text-end">
-                                <span th:if="${q.nota != null}">
-                                    <span th:if="${q.notaMaxima != null}" th:text="|${#numbers.formatDecimal(q.nota, 1, 2)} / ${#numbers.formatDecimal(q.notaMaxima, 1, 2)}|"></span>
-                                    <span th:if="${q.notaMaxima == null}" th:text="${#numbers.formatDecimal(q.nota, 1, 2)}"></span>
-                                </span>
-                            <span th:if="${q.nota == null}" class="text-muted">-</span>
+
+                            <!-- Caso em que a nota individual NÃO pode ser mostrada ao gestor -->
+                            <span th:if="${q.mascararNotaGestor()}">
+        <span th:if="${q.notaMaxima != null}"
+              th:text="|**** / ${#numbers.formatDecimal(q.notaMaxima, 1, 2)}|"></span>
+        <span th:if="${q.notaMaxima == null}" th:text="'****'"></span>
+    </span>
+
+                            <!-- Caso normal: nota visível -->
+                            <span th:if="${!q.mascararNotaGestor()}">
+        <span th:if="${q.nota != null}">
+            <span th:if="${q.notaMaxima != null}"
+                  th:text="|${#numbers.formatDecimal(q.nota, 1, 2)} / ${#numbers.formatDecimal(q.notaMaxima, 1, 2)}|"></span>
+            <span th:if="${q.notaMaxima == null}"
+                  th:text="${#numbers.formatDecimal(q.nota, 1, 2)}"></span>
+        </span>
+        <span th:if="${q.nota == null}" class="text-muted">-</span>
+    </span>
                         </td>
+
                     </tr>
                     </tbody>
                 </table>
@@ -198,12 +216,13 @@
         </div>
     </div>
 
-<!--    Card: Radar-->
-    <div class="card mb-4 mt-4" th:if="${criterios != null and !#lists.isEmpty(criterios)}">
+    <!-- Card: Radar (só aparece se houver comparativo de grupo) -->
+    <div class="card mb-4 mt-4"
+         th:if="${criterios != null and !#lists.isEmpty(criterios) and resumo.exibirComparativoGrupo()}">
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-baseline mb-1">
                 <h3 class="h6 mb-0">Performance por critério</h3>
-                <span class="text-muted small">Escala 0 – 5</span>
+                <span class="text-muted small">Escala 1 – 5</span>
             </div>
 
             <p class="text-muted small mb-3">
@@ -222,7 +241,7 @@
     <!-- ========================================================= -->
     <!-- Card: Insights avançados / Analytics                      -->
     <!-- ========================================================= -->
-    <div class="card mb-4" th:if="${criterios != null and !#lists.isEmpty(criterios)}">
+    <div class="card mb-4" th:if="${criterios != null and !#lists.isEmpty(criterios) and resumo.mediaGrupo != null}">
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-baseline mb-1">
                 <h3 class="h6 mb-0">Insights avançados</h3>
@@ -382,12 +401,16 @@
             // 2. GRÁFICOS HORIZONTAIS DA TABELA
             // =============================================
             const questionChartsData = [];
+            const exibirGrupoGlobal = /*[[${resumo.exibirComparativoGrupo()}]]*/ false;
 
             /*[# th:each="q : ${questoes}"]*/
             (function() {
                 const canvasId = 'chart-Q' + /*[[${q.ordem()}]]*/ '';
                 const nota = /*[[${q.nota}]]*/ null;
                 const max = /*[[${q.notaMaxima}]]*/ null;
+
+                // NOVO: Captura a flag de máscara do Java
+                const mascarar = /*[[${q.mascararNotaGestor()}]]*/ false;
 
                 const valMinGrupo = /*[[${q.notaGrupoMin}]]*/ null;
                 const valMaxGrupo = /*[[${q.notaGrupoMax}]]*/ null;
@@ -405,7 +428,9 @@
                     gMax: valMaxGrupo,
                     gMedia: valMediaGrupo,
                     rawNota: nota,
-                    rawMax: max
+                    rawMax: max,
+                    exibirGrupo: exibirGrupoGlobal,
+                    mascarar: mascarar
                 });
             })();
             /*[/]*/
@@ -414,9 +439,87 @@
                 const canvas = document.getElementById(config.canvasId);
                 if (!canvas) return;
 
-                // Cálculos das fatias
+                // === CONFIGURAÇÃO VISUAL ===
+                const ALTURA_BARRA = 16;
+                const TAMANHO_TRIANGULO = 7;
+
+                const SATURATED_COLORS = {
+                    red: '#fca5a5',
+                    yellow: '#fcd34d',
+                    green: '#86efac',
+                    blue: '#1d4ed8',
+                    gray: '#e5e7eb',
+                    black: '#1f2937'
+                };
+
+
+                // LÓGICA DE VISIBILIDADE DO TRIÂNGULO
+                // Só mostra se tiver nota E não estiver mascarado
+                const mostrarTriangulo = config.notaMedico !== null && !config.mascarar;
+
+                // ============================================================
+                // CASO 1: Barra Cinza (Nota Nula ou Sem Grupo)
+                // ============================================================
+                if (config.notaMedico === null || !config.exibirGrupo) {
+                    new Chart(canvas, {
+                        type: 'bar',
+                        data: {
+                            labels: [''],
+                            datasets: [
+                                {
+                                    label: 'Fundo Neutro',
+                                    data: [5], // Ocupa todo o espaço (0 a 5)
+                                    backgroundColor: SATURATED_COLORS.gray,
+                                    barThickness: ALTURA_BARRA,
+                                    borderRadius: 4,
+                                    borderSkipped: false,
+                                    stack: 'base',
+                                    order: 10
+                                },
+                                {
+                                    label: 'Sua Nota',
+                                    type: 'scatter',
+                                    data: mostrarTriangulo  ? [{ x: config.notaMedico, y: 0 }] : [],
+                                    pointStyle: 'triangle',
+                                    backgroundColor: SATURATED_COLORS.black,
+                                    borderColor: SATURATED_COLORS.black,
+                                    pointRadius: TAMANHO_TRIANGULO,
+                                    pointHoverRadius: TAMANHO_TRIANGULO,
+                                    order: 0,
+                                    clip: false
+                                }
+                            ]
+                        },
+                        options: {
+                            indexAxis: 'y',
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                            scales: {
+                                x: {
+                                    min: 0,
+                                    max: 5,
+                                    display: false,
+                                    stacked: true // <--- Importante para igualar o comportamento visual
+                                },
+                                y: {
+                                    display: false,
+                                    stacked: true
+                                }
+                            },
+                            // <--- AQUI ESTAVA A DIFERENÇA: Igualei o padding ao do gráfico colorido
+                            layout: { padding: { left: 5, right: 5, top: 0, bottom: 0 } }
+                        }
+                    });
+                    return;
+                }
+
+                // ============================================================
+                // CASO 2: Barra Colorida (Com Comparativo)
+                // ============================================================
                 const valMin = config.gMin || 0;
                 const valMax = config.gMax || 0;
+
                 const sliceRed = valMin;
                 const sliceYellow = Math.max(0, valMax - valMin);
                 const sliceGreen = Math.max(0, 5 - valMax);
@@ -426,74 +529,58 @@
                     data: {
                         labels: [''],
                         datasets: [
-                            // FUNDO COLORIDO (CORES MAIS VIVAS)
+                            // Fundo Colorido
                             {
-                                label: 'Abaixo do Grupo',
                                 data: [sliceRed],
-                                backgroundColor: '#ffb3b3', // Vermelho mais vivo
-                                barPercentage: 0.6,
-                                categoryPercentage: 1.0,
+                                backgroundColor: SATURATED_COLORS.red,
+                                barThickness: ALTURA_BARRA,
                                 stack: 'background',
                                 order: 10,
-                                borderSkipped: false,
-                                borderRadius: {
-                                    topLeft: 4,
-                                    bottomLeft: 4
-                                }
+                                borderRadius: { topLeft: 4, bottomLeft: 4 },
+                                borderSkipped: false
                             },
                             {
-                                label: 'Faixa do Grupo',
                                 data: [sliceYellow],
-                                backgroundColor: '#ffe680', // Amarelo mais vivo
-                                barPercentage: 0.6,
-                                categoryPercentage: 1.0,
+                                backgroundColor: SATURATED_COLORS.yellow,
+                                barThickness: ALTURA_BARRA,
                                 stack: 'background',
                                 order: 10
                             },
                             {
-                                label: 'Acima do Grupo',
                                 data: [sliceGreen],
-                                backgroundColor: '#99e699', // Verde mais vivo
-                                barPercentage: 0.6,
-                                categoryPercentage: 1.0,
+                                backgroundColor: SATURATED_COLORS.green,
+                                barThickness: ALTURA_BARRA,
                                 stack: 'background',
                                 order: 10,
-                                borderSkipped: false,
-                                borderRadius: {
-                                    topRight: 4,
-                                    bottomRight: 4
-                                }
+                                borderRadius: { topRight: 4, bottomRight: 4 },
+                                borderSkipped: false
                             },
 
-                            // MÉDIA (Traço Azul)
+                            // Média do Grupo (Azul)
                             {
                                 label: 'Média do Grupo',
                                 type: 'bar',
-                                data: config.gMedia !== null ? [
-                                    [config.gMedia - 0.02, config.gMedia + 0.02]
-                                ] : [],
-                                backgroundColor: '#0d6efd',
-                                barPercentage: 1.0,
-                                categoryPercentage: 1.0,
+                                data: config.gMedia !== null ? [ [config.gMedia - 0.02, config.gMedia + 0.02] ] : [],
+                                backgroundColor: SATURATED_COLORS.blue,
+                                barThickness: ALTURA_BARRA,
                                 stack: 'overlay',
+                                grouped: false, // <--- O Segredo! Impede que esta barra empurre ou encolha as outras
                                 order: 5,
-                                borderRadius: 1
+                                borderRadius: 2
                             },
 
-                            // NOTA DO MÉDICO (Triângulo voltado para cima)
+                            // Nota do Médico (Triângulo)
                             {
                                 label: 'Sua Nota',
                                 type: 'scatter',
-                                data: config.notaMedico !== null ? [{
-                                    x: config.notaMedico,
-                                    y: -0.8
-                                }] : [],
+                                data: mostrarTriangulo  ? [{ x: config.notaMedico, y: 0 }] : [],
                                 pointStyle: 'triangle',
-                                backgroundColor: '#212529',
-                                borderColor: '#212529',
-                                pointRadius: 7,
-                                rotation: 0,
-                                order: 0
+                                backgroundColor: SATURATED_COLORS.black,
+                                borderColor: SATURATED_COLORS.black,
+                                pointRadius: TAMANHO_TRIANGULO,
+                                pointHoverRadius: TAMANHO_TRIANGULO,
+                                order: 0,
+                                clip: false
                             }
                         ]
                     },
@@ -502,26 +589,18 @@
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: {
-                                display: false
-                            },
+                            legend: { display: false },
                             tooltip: {
                                 backgroundColor: '#1e293b',
-                                titleFont: {
-                                    size: 11
-                                },
-                                bodyFont: {
-                                    size: 11
-                                },
                                 padding: 8,
-                                cornerRadius: 4,
                                 displayColors: false,
                                 callbacks: {
                                     title: () => null,
                                     label(context) {
-                                        if (context.dataset.type === 'scatter') return `👨‍⚕️ Sua Nota: ${Number(config.rawNota).toFixed(2)}`;
-                                        if (context.dataset.label === 'Média do Grupo') return `🔵 Média do Grupo: ${config.gMedia?.toFixed(2)}`;
-                                        if (context.dataset.label === 'Faixa do Grupo') return `👥 Faixa do Grupo: ${config.gMin?.toFixed(2)} a ${config.gMax?.toFixed(2)}`;
+                                        if (context.dataset.type === 'scatter')
+                                            return `Sua Nota: ${Number(config.rawNota).toFixed(2)}`;
+                                        if (context.dataset.label === 'Média do Grupo')
+                                            return `Média Grupo: ${config.gMedia.toFixed(2)}`;
                                         return null;
                                     }
                                 }
@@ -531,33 +610,15 @@
                             x: {
                                 min: 0,
                                 max: 5,
-                                grid: {
-                                    display: false
-                                },
-                                ticks: {
-                                    display: false
-                                },
+                                display: false,
                                 stacked: true
                             },
                             y: {
-                                stacked: true,
-                                grid: {
-                                    display: false,
-                                    drawBorder: false
-                                },
-                                ticks: {
-                                    display: false
-                                }
+                                display: false,
+                                stacked: true
                             }
                         },
-                        layout: {
-                            padding: {
-                                left: 0,
-                                right: 0,
-                                top: 5,
-                                bottom: 5
-                            }
-                        }
+                        layout: { padding: { left: 5, right: 5, top: 0, bottom: 0 } }
                     }
                 });
             }
@@ -565,78 +626,95 @@
             questionChartsData.forEach(data => createRowChart(data));
 
             // =============================================
-            // 3. RADAR COMPARATIVO (BOLINHAS CHEIAS E ESPAÇAMENTO CORRIGIDO)
+            // 3. RADAR COMPARATIVO (só se exibirComparativoGrupo = true)
             // =============================================
             const criteriosLabels  = /*[[${criterios.![nomeCriterio]}]]*/ [];
             const criteriosMedico  = /*[[${criterios.![notaMedico]}]]*/ [];
             const criteriosGrupo   = /*[[${criterios.![notaGrupo]}]]*/ [];
+            const exibirGrupoRadar = /*[[${resumo.exibirComparativoGrupo()}]]*/ false;
 
             const radarComparativoEl = document.getElementById('radarComparativo');
 
-            if (radarComparativoEl && criteriosLabels.length > 0) {
+            if (radarComparativoEl && criteriosLabels.length > 0 && exibirGrupoRadar) {
 
-                // 1. PLUGIN PARA DAR MARGEM EMBAIXO DA LEGENDA
                 const legendMargin = {
                     id: 'legendMargin',
                     beforeInit(chart) {
                         const originalFit = chart.legend.fit;
                         chart.legend.fit = function fit() {
                             originalFit.bind(chart.legend)();
-                            this.height += 50; // Aumenta o espaço entre legenda e gráfico
+                            this.height += 50;
                         };
                     }
                 };
 
-                // 2. AJUSTE NAS BOLINHAS (CHEIAS)
                 const commonPointSettings = {
                     pointRadius: 4,
                     pointHoverRadius: 6,
                     pointBorderWidth: 2
-                    // Removido: pointBackgroundColor: '#fff' (agora fica cheio)
                 };
+
+                const datasets = [
+                    {
+                        label: '   Médico   ',
+                        data: criteriosMedico,
+                        fill: true,
+                        backgroundColor: 'rgba(10, 75, 155, 0.25)',
+                        borderColor: '#0A4B9B',
+                        borderWidth: 3,
+                        pointBorderColor: '#0A4B9B',
+                        pointBackgroundColor: '#0A4B9B',
+                        ...commonPointSettings
+                    },
+                    {
+                        label: '   Grupo   ',
+                        data: criteriosGrupo,
+                        fill: true,
+                        backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                        borderColor: '#10b981',
+                        borderWidth: 2,
+                        pointBorderColor: '#10b981',
+                        pointBackgroundColor: '#10b981',
+                        borderDash: [5, 5],
+                        ...commonPointSettings
+                    }
+                ];
 
                 new Chart(radarComparativoEl, {
                     type: 'radar',
                     plugins: [legendMargin],
                     data: {
                         labels: criteriosLabels,
-                        datasets: [
-                            {
-                                label: '   Médico   ',
-                                data: criteriosMedico,
-                                fill: true,
-                                backgroundColor: 'rgba(10, 75, 155, 0.25)',
-                                borderColor: '#0A4B9B', borderWidth: 3, pointBorderColor: '#0A4B9B',
-                                pointBackgroundColor: '#0A4B9B', // Garante que o fundo seja azul
-                                ...commonPointSettings
-                            },
-                            {
-                                label: '   Grupo   ',
-                                data: criteriosGrupo,
-                                fill: true,
-                                backgroundColor: 'rgba(16, 185, 129, 0.2)',
-                                borderColor: '#10b981', borderWidth: 2, pointBorderColor: '#10b981',
-                                pointBackgroundColor: '#10b981', // Garante que o fundo seja verde
-                                borderDash: [5, 5],
-                                ...commonPointSettings
-                            }
-                        ]
+                        datasets: datasets
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
                         layout: {
-                            // Zera o topo para colar a legenda no subtítulo do HTML
                             padding: { top: 0, bottom: 20, left: 20, right: 20 }
                         },
                         elements: { line: { tension: 0.1 } },
                         scales: {
                             r: {
-                                beginAtZero: true, max: 5, min: 0,
-                                ticks: { stepSize: 1, color: '#9ca3af', showLabelBackdrop: false, font: { size: 11 } },
-                                grid: { color: 'rgba(148, 163, 184, 0.2)', circular: true },
+                                beginAtZero: true,
+                                max: 5,
+                                min: 0,
+                                ticks: {
+                                    stepSize: 1,
+                                    color: '#9ca3af',
+                                    showLabelBackdrop: false,
+                                    font: { size: 11 }
+                                },
+                                grid: {
+                                    color: 'rgba(148, 163, 184, 0.2)',
+                                    circular: true
+                                },
                                 angleLines: { color: 'rgba(148, 163, 184, 0.2)' },
-                                pointLabels: { font: { size: 16, weight: '600' }, color: '#4b5563', padding: 15 }
+                                pointLabels: {
+                                    font: { size: 16, weight: '600' },
+                                    color: '#4b5563',
+                                    padding: 15
+                                }
                             }
                         },
                         plugins: {
@@ -651,7 +729,10 @@
                                 }
                             },
                             tooltip: {
-                                backgroundColor: '#1e293b', padding: 12, titleFont: { size: 13 }, bodyFont: { size: 13 },
+                                backgroundColor: '#1e293b',
+                                padding: 12,
+                                titleFont: { size: 13 },
+                                bodyFont: { size: 13 },
                                 callbacks: {
                                     label: function (context) {
                                         return `${context.dataset.label.trim()}: ${context.raw?.toFixed(2)}`;
@@ -673,7 +754,7 @@
                 const errorBox = document.getElementById('insightsError');
 
                 if (!btn || !content) {
-                    return; // card não está na página
+                    return;
                 }
 
                 const idAvaliacao = /*[[${avaliacao.idAvaliacao}]]*/ null;
@@ -708,27 +789,23 @@
 
                         const wrapper = document.createElement('div');
 
-                        // Título do bloco em negrito
                         const strong = document.createElement('strong');
                         strong.textContent = titulo + ': ';
                         wrapper.appendChild(strong);
 
-                        // Corpo vindo da API já em HTML (com <p>, <strong> etc.)
                         const span = document.createElement('span');
-                        span.innerHTML = html;   // <- AQUI é o ponto chave
+                        span.innerHTML = html;
                         wrapper.appendChild(span);
 
                         content.appendChild(wrapper);
                     });
                 }
 
-
                 btn.addEventListener('click', function () {
                     if (!idAvaliacao || !idMedico) {
                         return;
                     }
 
-                    // se já carregou uma vez, apenas reexibe (não refaz a chamada)
                     if (jaCarregado) {
                         return;
                     }
@@ -763,10 +840,6 @@
                         });
                 });
             })();
-
-
-
-
 
         }); // fim DOMContentLoaded
         /*]]>*/

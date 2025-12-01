@@ -212,6 +212,21 @@ public class RelatorioAvaliacaoServiceImpl implements RelatorioAvaliacaoService 
         List<Participacao> participacoes =
                 participacaoService.listByAvaliacao(avaliacao.getIdAvaliacao(), 0, BIG_SIZE);
 
+        // Quantos realmente responderam
+        long respondidas = participacoes.stream()
+                .filter(p -> "RESPONDIDA".equalsIgnoreCase(p.getStatus()))
+                .count();
+
+// k-mínimo configurado na avaliação
+        Integer kConfig = avaliacao.getkMinimo();
+        int kMin = (kConfig != null ? kConfig : 0);
+
+// Regra de anonimato: só exibe grupo se atingiu k-mínimo E tiver mais de 1 respondente
+        boolean exibirComparativoGrupo = respondidas >= kMin && respondidas > 1;
+
+
+
+
         Participacao participacao = participacoes.stream()
                 .filter(p -> Objects.equals(p.getAvaliadoMedicoId(), idMedico))
                 .findFirst()
@@ -247,22 +262,25 @@ public class RelatorioAvaliacaoServiceImpl implements RelatorioAvaliacaoService 
         // 2. Mapa de notas normalizadas (0–5) por questão para o grupo
         Map<Long, List<BigDecimal>> notasGrupoPorQuestao = new HashMap<>();
 
-        for (Participacao p : participacoes) {
-            List<Resposta> respostasP = respostaService.listByParticipacao(p.getIdParticipacao());
-            for (Resposta r : respostasP) {
-                BigDecimal valor = r.getValorNumerico();
-                if (valor != null && r.getIdQuestao() != null) {
-                    Questao q = questaoService.findById(r.getIdQuestao()).orElse(null);
-                    BigDecimal maxEscala = obterEscalaMax(q);
-                    if (maxEscala != null && maxEscala.compareTo(BigDecimal.ZERO) > 0) {
-                        BigDecimal normalizada = normalizarPara05(valor, maxEscala);
-                        notasGrupoPorQuestao
-                                .computeIfAbsent(r.getIdQuestao(), k -> new ArrayList<>())
-                                .add(normalizada);
+        if (exibirComparativoGrupo) {
+            for (Participacao p : participacoes) {
+                List<Resposta> respostasP = respostaService.listByParticipacao(p.getIdParticipacao());
+                for (Resposta r : respostasP) {
+                    BigDecimal valor = r.getValorNumerico();
+                    if (valor != null && r.getIdQuestao() != null) {
+                        Questao q = questaoService.findById(r.getIdQuestao()).orElse(null);
+                        BigDecimal maxEscala = obterEscalaMax(q);
+                        if (maxEscala != null && maxEscala.compareTo(BigDecimal.ZERO) > 0) {
+                            BigDecimal normalizada = normalizarPara05(valor, maxEscala);
+                            notasGrupoPorQuestao
+                                    .computeIfAbsent(r.getIdQuestao(), k -> new ArrayList<>())
+                                    .add(normalizada);
+                        }
                     }
                 }
             }
         }
+
 
         // 2.1 Agrega por critério – grupo
         Map<Long, Long> questaoParaCriterio = new HashMap<>();
@@ -294,7 +312,6 @@ public class RelatorioAvaliacaoServiceImpl implements RelatorioAvaliacaoService 
 
         // 3. Estatísticas globais da avaliação (mín/máx/média do grupo)
         List<BigDecimal> notasGlobaisDosColegas = new ArrayList<>();
-
         for (Participacao p : participacoes) {
             BigDecimal notaGlobalParticipante = calcularNotaGlobalParticipacao(p, totalQuestoesNumericas);
             if (notaGlobalParticipante != null) {
@@ -306,7 +323,7 @@ public class RelatorioAvaliacaoServiceImpl implements RelatorioAvaliacaoService 
         BigDecimal menorNotaGp = null;
         BigDecimal maiorNotaGp = null;
 
-        if (!notasGlobaisDosColegas.isEmpty()) {
+        if (exibirComparativoGrupo && !notasGlobaisDosColegas.isEmpty()) {
             menorNotaGp = notasGlobaisDosColegas.stream()
                     .min(Comparator.naturalOrder())
                     .orElse(null);
@@ -324,6 +341,7 @@ public class RelatorioAvaliacaoServiceImpl implements RelatorioAvaliacaoService 
                     RoundingMode.HALF_UP
             );
         }
+
 
         // 4. Respostas do médico
         List<Resposta> respostasMedico = respostaService.listByParticipacao(participacao.getIdParticipacao());
@@ -369,7 +387,7 @@ public class RelatorioAvaliacaoServiceImpl implements RelatorioAvaliacaoService 
             BigDecimal notaGrupoMaxQuestao = null;
             BigDecimal notaGrupoMediaQuestao = null;
 
-            if (idQuestao != null) {
+            if (exibirComparativoGrupo && idQuestao != null) {
                 List<BigDecimal> grupoNotas = notasGrupoPorQuestao.get(idQuestao);
                 if (grupoNotas != null && !grupoNotas.isEmpty()) {
                     notaGrupoMinQuestao = grupoNotas.stream()
@@ -394,6 +412,7 @@ public class RelatorioAvaliacaoServiceImpl implements RelatorioAvaliacaoService 
                 }
             }
 
+
             BigDecimal notaNormalizada = null;
             if (valor != null && maxEscala != null && maxEscala.compareTo(BigDecimal.ZERO) > 0) {
                 notaNormalizada = normalizarPara05(valor, maxEscala);
@@ -407,6 +426,10 @@ public class RelatorioAvaliacaoServiceImpl implements RelatorioAvaliacaoService 
                 }
             }
 
+            // flags de privacidade da questão
+            boolean sensivel = questaoEnt != null && Boolean.TRUE.equals(questaoEnt.getSensivel());
+            boolean visivelParaGestor = questaoEnt != null && Boolean.TRUE.equals(questaoEnt.getVisivelParaGestor());
+
             questoes.add(new QuestaoNotaVM(
                     ordem++,
                     valor,
@@ -414,8 +437,11 @@ public class RelatorioAvaliacaoServiceImpl implements RelatorioAvaliacaoService 
                     textoQuestao,
                     notaGrupoMinQuestao,
                     notaGrupoMaxQuestao,
-                    notaGrupoMediaQuestao
+                    notaGrupoMediaQuestao,
+                    sensivel,
+                    visivelParaGestor
             ));
+
         }
 
         // 5. Nota global do médico (gauge)
@@ -454,8 +480,10 @@ public class RelatorioAvaliacaoServiceImpl implements RelatorioAvaliacaoService 
                 notasOriginais.size(),
                 mediaGrupo,
                 menorNotaGp,
-                maiorNotaGp
+                maiorNotaGp,
+                exibirComparativoGrupo   // <-- NOVO
         );
+
 
         // 6. Monta lista de critérios para o gráfico radar
         List<CriterioRadarVM> criteriosRadar = new ArrayList<>();
@@ -480,10 +508,11 @@ public class RelatorioAvaliacaoServiceImpl implements RelatorioAvaliacaoService 
             }
 
             Integer countGrupo = qtdeGrupoPorCriterio.get(idCriterio);
-            if (countGrupo != null && countGrupo > 0) {
+            if (exibirComparativoGrupo && countGrupo != null && countGrupo > 0) {
                 notaGrupoCrit = somaGrupoPorCriterio.get(idCriterio)
                         .divide(BigDecimal.valueOf(countGrupo), 2, RoundingMode.HALF_UP);
             }
+
 
             criteriosRadar.add(new CriterioRadarVM(
                     idCriterio,

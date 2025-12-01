@@ -225,8 +225,11 @@ public class ColetaPageController {
                     (r != null ? r.getIdResposta() : null),
                     valorNumerico,
                     valorBinario,
-                    texto
+                    texto,
+                    q.getSensivel(),
+                    q.getVisivelParaGestor()
             ));
+
         }
 
         // Ordena por ordem da avaliação
@@ -354,8 +357,11 @@ public class ColetaPageController {
                         (r != null ? r.getIdResposta() : null),
                         valorNumerico,
                         valorBinario,
-                        texto
+                        texto,
+                        q.getSensivel(),
+                        q.getVisivelParaGestor()
                 ));
+
             }
             questoes.sort(Comparator.comparing(QuestaoRespostaVM::ordem));
 
@@ -623,8 +629,11 @@ public class ColetaPageController {
             Long idResposta,
             Integer valorNumerico,
             Boolean valorBinario,
-            String texto
+            String texto,
+            Boolean sensivel,
+            Boolean visivelParaGestor
     ) {}
+
 
     public record StatusVisualVM(String label, String badgeClass) {}
 }

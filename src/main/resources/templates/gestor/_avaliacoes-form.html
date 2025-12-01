@@ -11,7 +11,7 @@
           method="post"
           class="card p-3"
           id="avaliacaoForm"
-          th:attr="data-modo-leitura=${modoLeitura}">
+          th:attr="data-modo-leitura=${modoLeitura}, data-status-atual=${form.status}">
 
 
     <div class="row g-3">
@@ -156,50 +156,147 @@
             </div>
         </div>
     </form>
+
+    <!-- Modal de confirmação de publicação -->
+    <div class="modal fade" id="confirmPublicacaoModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar publicação</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="confirmPublicacaoTexto">
+                        <!-- texto preenchido via JavaScript -->
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary" id="btnConfirmarPublicacao">
+                        Confirmar publicação
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
     <script th:inline="javascript">
         document.addEventListener('DOMContentLoaded', function () {
             var escopoSelect = document.getElementById('escopo');
             var grupoUnidade = document.getElementById('grupoUnidade');
             var grupoEspecialidade = document.getElementById('grupoEspecialidade');
             var formElem = document.getElementById('avaliacaoForm');
+            var statusSelect = document.getElementById('status');
+
+            // elementos do modal
+            var modalEl = document.getElementById('confirmPublicacaoModal');
+            var modalTextoEl = document.getElementById('confirmPublicacaoTexto');
+            var btnConfirmarPublicacao = document.getElementById('btnConfirmarPublicacao');
+            var modalInstance = modalEl && window.bootstrap
+                ? new bootstrap.Modal(modalEl)
+                : null;
 
             if (!escopoSelect || !grupoUnidade || !grupoEspecialidade || !formElem) {
                 return;
             }
 
             var isReadOnly = formElem.getAttribute('data-modo-leitura') === 'true';
-            // Em modo leitura, não esconde nada — só mostra como está gravado
-            if (isReadOnly) {
-                return;
-            }
+            var statusAtual = formElem.getAttribute('data-status-atual') || 'RASCUNHO';
 
-            function atualizarVisibilidade() {
-                var valor = escopoSelect.value;
+            // Em modo leitura, só exibe — não mexe em nada
+            if (!isReadOnly) {
 
-                if (valor === 'GLOBAL') {
-                    grupoUnidade.classList.add('d-none');
-                    grupoEspecialidade.classList.add('d-none');
-                    var selUnidade = document.getElementById('idUnidade');
-                    var selEsp = document.getElementById('idEspecialidade');
-                    if (selUnidade) selUnidade.value = '';
-                    if (selEsp) selEsp.value = '';
-                } else if (valor === 'UNIDADE') {
-                    grupoUnidade.classList.remove('d-none');
-                    grupoEspecialidade.classList.add('d-none');
-                    var selEsp = document.getElementById('idEspecialidade');
-                    if (selEsp) selEsp.value = '';
-                } else if (valor === 'ESPECIALIDADE') {
-                    grupoUnidade.classList.add('d-none');
-                    grupoEspecialidade.classList.remove('d-none');
-                    var selUnidade = document.getElementById('idUnidade');
-                    if (selUnidade) selUnidade.value = '';
+                // --- Visibilidade de unidade/especialidade conforme escopo ---
+                function atualizarVisibilidade() {
+                    var valor = escopoSelect.value;
+
+                    if (valor === 'GLOBAL') {
+                        grupoUnidade.classList.add('d-none');
+                        grupoEspecialidade.classList.add('d-none');
+                        var selUnidade = document.getElementById('idUnidade');
+                        var selEsp = document.getElementById('idEspecialidade');
+                        if (selUnidade) selUnidade.value = '';
+                        if (selEsp) selEsp.value = '';
+                    } else if (valor === 'UNIDADE') {
+                        grupoUnidade.classList.remove('d-none');
+                        grupoEspecialidade.classList.add('d-none');
+                        var selEsp2 = document.getElementById('idEspecialidade');
+                        if (selEsp2) selEsp2.value = '';
+                    } else if (valor === 'ESPECIALIDADE') {
+                        grupoUnidade.classList.add('d-none');
+                        grupoEspecialidade.classList.remove('d-none');
+                        var selUnidade2 = document.getElementById('idUnidade');
+                        if (selUnidade2) selUnidade2.value = '';
+                    }
+                }
+
+                escopoSelect.addEventListener('change', atualizarVisibilidade);
+                atualizarVisibilidade(); // inicial
+
+                // --- Confirmação ao publicar (RASCUNHO -> PUBLICADA) com modal ---
+                if (statusSelect && modalInstance && modalTextoEl && btnConfirmarPublicacao) {
+
+                    formElem.addEventListener('submit', function (e) {
+                        var novoStatus = statusSelect.value;
+
+                        // se já confirmamos uma vez, deixa enviar normalmente
+                        if (formElem.dataset.confirmado === 'true') {
+                            formElem.dataset.confirmado = 'false';
+                            return;
+                        }
+
+                        // só intercepta quando for transição para PUBLICADA
+                        if (statusAtual !== 'PUBLICADA' && novoStatus === 'PUBLICADA') {
+                            e.preventDefault();
+
+                            var escopoValor = escopoSelect ? escopoSelect.value : 'GLOBAL';
+                            var complementoEscopo;
+
+                            if (escopoValor === 'GLOBAL') {
+                                complementoEscopo = "para todos os médicos.";
+                            } else if (escopoValor === 'UNIDADE') {
+                                var selUnidade = document.getElementById('idUnidade');
+                                var nomeUnidade = selUnidade && selUnidade.selectedIndex > 0
+                                    ? selUnidade.options[selUnidade.selectedIndex].text
+                                    : "(unidade selecionada)";
+                                complementoEscopo = 'para todos os médicos da unidade "' + nomeUnidade + '".';
+                            } else if (escopoValor === 'ESPECIALIDADE') {
+                                var selEsp = document.getElementById('idEspecialidade');
+                                var nomeEsp = selEsp && selEsp.selectedIndex > 0
+                                    ? selEsp.options[selEsp.selectedIndex].text
+                                    : "(especialidade selecionada)";
+                                complementoEscopo = 'para todos os médicos da especialidade "' + nomeEsp + '".';
+                            } else {
+                                complementoEscopo = "para todos os médicos do escopo selecionado.";
+                            }
+
+                            var msg = "Ao publicar esta avaliação, o sistema irá gerar participações "
+                                + complementoEscopo
+                                + " Isso liberará o preenchimento da avaliação para esse grupo. "
+                                + "Deseja continuar?";
+
+                            modalTextoEl.textContent = msg;
+                            modalInstance.show();
+
+                            // quando o usuário confirmar no modal, submetemos de verdade
+                            btnConfirmarPublicacao.onclick = function () {
+                                formElem.dataset.confirmado = 'true';
+                                modalInstance.hide();
+                                formElem.submit();
+                            };
+                        }
+                    });
                 }
             }
-
-            escopoSelect.addEventListener('change', atualizarVisibilidade);
-            atualizarVisibilidade(); // inicial
         });
     </script>
+
+
 
 
 
