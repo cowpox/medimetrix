@@ -149,67 +149,17 @@
 
     <!-- Scripts do gráfico -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script th:inline="javascript">
-        // =======================
-        // Gráfico de participações
-        // =======================
-        const total        = /*[[${resumo.totalParticipacoes}]]*/ 0;
-        const respondidas  = /*[[${resumo.respondidas}]]*/ 0;
-        const emAndamento  = /*[[${resumo.emAndamento}]]*/ 0;
-        const pendentes    = /*[[${resumo.pendentes}]]*/ 0;
-
-        const ctx = document.getElementById('participacoesChart');
-        if (ctx && total > 0) {
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Respondidas', 'Em andamento', 'Pendentes'],
-                    datasets: [{
-                        data: [respondidas, emAndamento, pendentes],
-                        backgroundColor: [
-                            '#0A4B9B', // azul MMX
-                            '#FF9F43', // laranja
-                            '#CED4DA'  // cinza claro
-                        ],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    cutout: '72%',
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                usePointStyle: true,
-                                pointStyle: 'circle'
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    const value = context.parsed;
-                                    const totalLocal = respondidas + emAndamento + pendentes;
-                                    const percent = totalLocal > 0
-                                        ? (value * 100 / totalLocal).toFixed(1)
-                                        : 0;
-                                    return `${context.label}: ${value} (${percent}%)`;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
         // ==========================
         // Gráfico de notas por médico
         // ==========================
+
         // Listas vindo do servidor (apenas médicos com nota != null)
         const labelsMedicos = /*[[${participacoes.?[notaMedia != null].![nomeMedico]}]]*/ [];
         const dadosNotas    = /*[[${participacoes.?[notaMedia != null].![notaMedia]}]]*/ [];
 
         if (labelsMedicos.length > 0) {
+
             const notasCtx = document.getElementById('notasMedicosChart');
 
             // Combina label + nota e ordena pela nota (crescente)
@@ -218,11 +168,23 @@
                 nota: dadosNotas[idx]
             }));
 
-            combinado.sort((a, b) => a.nota - b.nota); // menor em cima, maior embaixo
+            combinado.sort((a, b) => a.nota - b.nota);
 
             const labelsOrdenados = combinado.map(item => item.label);
             const notasOrdenadas  = combinado.map(item => item.nota);
 
+            // =============================
+            // Altura dinâmica do gráfico
+            // =============================
+            const alturaPorBarra = 24;   // ajuste fino (22–30 fica ótimo)
+            const margemExtra    = 60;   // espaço extra superior/inferior
+            const alturaFinal    = labelsOrdenados.length * alturaPorBarra + margemExtra;
+
+            notasCtx.height = alturaFinal;
+
+            // =============================
+            // Criação do gráfico
+            // =============================
             new Chart(notasCtx, {
                 type: 'bar',
                 data: {
@@ -230,27 +192,35 @@
                     datasets: [{
                         label: 'Nota média',
                         data: notasOrdenadas,
-                        backgroundColor: '#0A4B9B'
+                        backgroundColor: '#0A4B9B',
+                        barThickness: 18,       // barras mais espessas
+                        maxBarThickness: 26,    // limite máximo
+                        borderRadius: 4         // cantos arredondados (fica mais bonito)
                     }]
                 },
                 options: {
                     indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
-                    aspectRatio: 2,
+
                     scales: {
                         x: {
                             beginAtZero: true,
                             max: 5,
+                            ticks: { stepSize: 1 }
+                        },
+                        y: {
                             ticks: {
-                                stepSize: 1
+                                autoSkip: false,       // MOSTRA TODOS OS LABELS
+                                font: { size: 11 },    // reduzido para caber mais
+                                padding: 4
                             }
                         }
                     },
+
                     plugins: {
-                        legend: {
-                            display: false
-                        },
+                        legend: { display: false },
+
                         tooltip: {
                             callbacks: {
                                 label: function (context) {
@@ -264,6 +234,7 @@
             });
         }
     </script>
+
 
 </section>
 
