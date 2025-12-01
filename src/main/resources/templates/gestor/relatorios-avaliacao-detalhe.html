@@ -109,12 +109,12 @@
                         </td>
                         <td>
                             <span class="badge"
-                                  th:classappend="${p.status} == 'RESPONDIDA' ? ' bg-success' :
-                                                   (${p.status} == 'PENDENTE' ? ' bg-warning text-dark' :
-                                                   (${p.status} == 'EM_ANDAMENTO' ? ' bg-info text-dark' : ' text-bg-light'))"
+                                  th:classappend="${p.status == 'RESPONDIDA'}   ? 'bg-success' :
+                       (${p.status == 'EM_ANDAMENTO'} ? 'bg-warning text-dark' :
+                                                        'bg-light text-dark border')"
                                   th:text="${p.status}">
-                                STATUS
-                            </span>
+    STATUS
+</span>
                         </td>
                         <td class="text-end"
                             th:text="${p.notaMedia} != null ? ${#numbers.formatDecimal(p.notaMedia, 1, 2)} : '-'">
@@ -150,6 +150,47 @@
     <!-- Scripts do gráfico -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script th:inline="javascript">
+
+        // ==========================
+        // 1. Gráfico de Participações (Doughnut) - O QUE FALTAVA
+        // ==========================
+
+        // Pega os valores do objeto resumo
+        const qtdRespondidas = /*[[${resumo.respondidas}]]*/ 0;
+        const qtdAndamento   = /*[[${resumo.emAndamento}]]*/ 0;
+        const qtdPendentes   = /*[[${resumo.pendentes}]]*/ 0;
+
+        const participacoesCtx = document.getElementById('participacoesChart');
+
+        if (participacoesCtx) {
+            new Chart(participacoesCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Respondidas', 'Em andamento', 'Pendentes'],
+                    datasets: [{
+                        data: [qtdRespondidas, qtdAndamento, qtdPendentes],
+                        backgroundColor: [
+                            '#198754', // Verde  -> Respondidas
+                            '#fdbf07', // Amarelo    -> Em andamento
+                            '#e6e6ed'  // Cinza -> Pendentes
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%', // Cria o buraco no meio para o texto de %
+                    plugins: {
+                        legend: { display: false }, // Esconde a legenda pois já tem texto ao lado
+                        tooltip: { enabled: true }
+                    }
+                }
+            });
+        }
+
+
         // ==========================
         // Gráfico de notas por médico
         // ==========================
