@@ -40,3 +40,6 @@ application-prod.yml
 ### Diretórios de documentação e exportações ###
 /docs/generated/
 /docs/temp/
+
+### Arquivos do front
+.env
